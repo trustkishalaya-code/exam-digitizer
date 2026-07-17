@@ -26,31 +26,68 @@ if "exam_data" not in st.session_state:
 if "raw_json" not in st.session_state:
     st.session_state.raw_json = None
 
-# --- Minimalist iOS / One UI Custom CSS ---
+# --- Minimalist iOS / One UI Custom CSS with Gradient Text Animation ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
+    /* High-Impact Animated Gradient Title */
     .main-title {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 3.5rem;
+        font-weight: 900;
         text-align: center;
-        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #007AFF 0%, #FF2D55 50%, #5856D6 100%);
+        background-size: 200% auto;
+        color: #fff;
+        background-clip: text;
+        text-fill-color: transparent;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradientFlow 5s ease infinite;
         margin-bottom: 5px;
         padding-top: 20px;
+        letter-spacing: -1.5px;
+    }
+    
+    @keyframes gradientFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
     
     .sub-title {
         text-align: center;
         color: #8E8E93;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 400;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         letter-spacing: -0.2px;
+    }
+
+    /* Description Box Styling */
+    .description-container {
+        background-color: #F2F2F7;
+        padding: 20px;
+        border-radius: 14px;
+        margin-bottom: 40px;
+        border: 1px solid #E5E5EA;
+    }
+    
+    .description-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #1C1C1E;
+        margin-bottom: 10px;
+    }
+    
+    .description-text {
+        font-size: 0.95rem;
+        color: #3A3A3C;
+        line-height: 1.5;
     }
 
     .section-header {
@@ -168,12 +205,12 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
 
     def format_meta(label, val):
         if not val: return ""
-        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "समय" in val or "पूर्णांक" in val:
+        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "সময়" in val or "पूर्णांक" in val:
             return val
         return f"{label} — {val}"
 
     meta_table = doc.add_table(rows=2, cols=2)
-    meta_table.autofit = True # Ensures layout doesn't break
+    meta_table.autofit = True
     
     meta_table.rows[0].cells[0].paragraphs[0].text = format_meta(class_label, data.class_name)
     meta_table.rows[0].cells[1].paragraphs[0].text = format_meta(marks_label, data.full_marks)
@@ -225,7 +262,7 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
                 doc.add_paragraph().add_run(b.text_content).bold = True
             if b.table_rows and b.table_cols:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
-                tbl.autofit = True # Allows you to freely edit cell contents without breaking table borders
+                tbl.autofit = True
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
                 set_table_borders(tbl, "cccccc")
                 if b.table_data:
@@ -259,12 +296,11 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
             box_tbl.rows[0].height = Inches(b.box_height_inches or 2.0)
             set_table_borders(box_tbl, "888888")
             
-            # --- Smart Image Placeholder ---
             if b.diagram_description:
                 cell_p = box_tbl.rows[0].cells[0].paragraphs[0]
                 cell_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run = cell_p.add_run(f"[Insert Diagram Here: {b.diagram_description}]")
-                run.font.color.rgb = RGBColor(150, 150, 150) # Light gray placeholder text
+                run.font.color.rgb = RGBColor(150, 150, 150)
                 
             doc.add_paragraph()
 
@@ -276,8 +312,9 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
 st.markdown('<p class="main-title">Question Paper Studio</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
 
+# Clean SVG Explainer Graphic
 st.markdown("""
-<div style="display: flex; justify-content: center; align-items: center; padding: 10px 0 40px 0; gap: 25px; opacity: 0.8;">
+<div style="display: flex; justify-content: center; align-items: center; padding: 10px 0 20px 0; gap: 25px; opacity: 0.8;">
    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
       <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -302,6 +339,24 @@ st.markdown("""
       <line x1="16" y1="17" x2="8" y2="17"></line>
       <polyline points="10 9 9 9 8 9"></polyline>
    </svg>
+</div>
+""", unsafe_allow_html=True)
+
+# --- ADDED: Clean, Steady App Onboarding & Description Box ---
+st.markdown("""
+<div class="description-container">
+    <div class="description-title">What this platform does & What to expect:</div>
+    <div class="description-text">
+        <strong>Question Paper Studio</strong> turns images of printed, typed, or messy handwritten exams into fully structured, 100% editable Microsoft Word (.docx) documents.
+        <br><br>
+        <strong>What you can do:</strong>
+        <ul>
+            <li><strong>Digitize Handwriting:</strong> Extract text seamlessly across languages (Bengali, Hindi, English). For complex scripts, switch to the <em>High Accuracy Pro</em> engine.</li>
+            <li><strong>Preserve Layout Structure:</strong> Automatically organize school headers, multi-column configurations, and question grids without manual re-typing.</li>
+            <li><strong>Smart Diagram Handling:</strong> If the AI spots an image or illustration, it places a specialized border box labeled with a custom description of the photo, so you can easily drop the graphic back in during final edits.</li>
+        </ul>
+        <strong>What to expect:</strong> You will get a completely standard Word formatting block structure. Because the underlying file is formatted natively with auto-fitting parameters, you can change margins, switch fonts, adjust text parameters, or append new sections later without throwing the layout out of alignment.
+    </div>
 </div>
 """, unsafe_allow_html=True)
 

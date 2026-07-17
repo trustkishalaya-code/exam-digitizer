@@ -15,131 +15,130 @@ import io
 
 # --- Page Setup (MUST BE FIRST) ---
 st.set_page_config(
-    page_title="Exam Digitizer Ultra",
+    page_title="AI Exam Digitizer Pro",
     page_icon="🔮",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 🎨 Ultra-Premium Custom CSS ---
+# --- 🎨 Ultra-Premium Typographic Custom CSS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
 
-    /* Global Font & Subtle Tweaks */
+    /* Global Font Overrides */
     html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
     }
     
-    /* Animated Gradient Main Title */
+    h1, h2, h3, .main-title, .section-header {
+        font-family: 'Space Grotesk', sans-serif !important;
+    }
+    
+    /* Cosmic Neon Gradient Title */
     .main-title {
-        font-size: 4rem;
+        font-size: 3.8rem;
         font-weight: 900;
         text-align: center;
-        background: linear-gradient(to right, #00F260, #0575E6, #00F260);
+        background: linear-gradient(135deg, #FF007A 0%, #7928CA 50%, #00DFD8 100%);
         background-size: 200% auto;
         color: #fff;
         background-clip: text;
         text-fill-color: transparent;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: shine 3s linear infinite;
-        margin-bottom: -10px;
-        padding-top: 20px;
+        animation: gradientFlow 4s ease infinite;
+        margin-bottom: -5px;
+        padding-top: 15px;
+        letter-spacing: -1px;
     }
     
-    @keyframes shine {
-        to { background-position: 200% center; }
+    @keyframes gradientFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
     
     /* Subtitle */
     .sub-title {
         text-align: center;
-        color: #8892b0;
-        font-size: 1.2rem;
+        color: #94A3B8;
+        font-size: 1.15rem;
         font-weight: 400;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
+        letter-spacing: 0.2px;
     }
 
-    /* Glassmorphism for Sidebar */
+    /* Glassmorphism Sidebar */
     [data-testid="stSidebar"] {
-        background: rgba(15, 23, 42, 0.05) !important;
-        backdrop-filter: blur(15px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(15, 23, 42, 0.4) !important;
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    /* Sexy Interactive File Uploader */
+    /* Interactive Cyber Drag & Dropzone */
     [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #0575E6 !important;
-        background-color: rgba(5, 117, 230, 0.03) !important;
-        border-radius: 20px !important;
-        padding: 30px !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border: 2px dashed #7928CA !important;
+        background-color: rgba(121, 40, 202, 0.03) !important;
+        border-radius: 16px !important;
+        padding: 40px 20px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        background-color: rgba(5, 117, 230, 0.08) !important;
-        border-color: #00F260 !important;
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(5, 117, 230, 0.2);
+        background-color: rgba(0, 223, 216, 0.04) !important;
+        border-color: #00DFD8 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 223, 216, 0.15);
     }
 
-    /* Primary Generate Button (Pulse & Glow) */
+    /* Glowing Primary Trigger Button */
     .stButton>button {
         width: 100%;
-        background-image: linear-gradient(to right, #4776E6 0%, #8E54E9 51%, #4776E6 100%);
-        margin: 10px 0px;
-        padding: 15px 20px;
+        background-image: linear-gradient(135deg, #7928CA 0%, #FF007A 100%);
+        padding: 14px 20px;
         text-align: center;
-        text-transform: uppercase;
-        transition: 0.5s;
-        background-size: 200% auto;
+        transition: 0.4s;
+        background-size: 150% auto;
         color: white !important;
         border-radius: 12px;
         border: none;
-        font-weight: 900;
-        letter-spacing: 1px;
-        box-shadow: 0 4px 15px rgba(142, 84, 233, 0.4);
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(121, 40, 202, 0.3);
     }
     .stButton>button:hover {
         background-position: right center;
-        box-shadow: 0 8px 25px rgba(142, 84, 233, 0.6);
+        box-shadow: 0 8px 25px rgba(255, 0, 122, 0.5);
         transform: translateY(-2px);
     }
     
-    /* Download Button (Neon Green Success) */
+    /* Glowing Success Download Button */
     .stDownloadButton>button {
         width: 100%;
-        background-image: linear-gradient(to right, #11998e 0%, #38ef7d 51%, #11998e 100%);
-        margin: 10px 0px;
-        padding: 15px 20px;
+        background-image: linear-gradient(135deg, #00DFD8 0%, #00F260 100%);
+        padding: 14px 20px;
         text-align: center;
-        text-transform: uppercase;
-        transition: 0.5s;
-        background-size: 200% auto;
-        color: white !important;
+        transition: 0.4s;
+        background-size: 150% auto;
+        color: #0F172A !important; /* Dark text for high contrast on neon green/blue */
         border-radius: 12px;
         border: none;
-        font-weight: 900;
-        letter-spacing: 1px;
-        box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0, 223, 216, 0.3);
     }
     .stDownloadButton>button:hover {
         background-position: right center;
-        box-shadow: 0 8px 25px rgba(56, 239, 125, 0.6);
+        box-shadow: 0 8px 25px rgba(0, 242, 96, 0.5);
         transform: translateY(-2px);
-    }
-    
-    /* Info/Success/Warning Cards Styling */
-    .stAlert {
-        border-radius: 15px !important;
-        border: none !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# --- 1. Define the Universal Layout Schema ---
+# --- 1. Universal Layout Schema ---
 class LayoutBlock(BaseModel):
     block_type: str = Field(description="Can be: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', 'drawing_box_block'")
     text_content: Optional[str] = Field(default=None)
@@ -167,44 +166,40 @@ def set_table_borders(table, color="cccccc"):
     tblBorders = OxmlElement('w:tblBorders')
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
-        border.set(qn('w:val'), 'single')
-        border.set(qn('w:sz'), '4')  
-        border.set(qn('w:space'), '0')
-        border.set(qn('w:color'), color)  
+        border.set(qn('w:val'), 'single'); border.set(qn('w:sz'), '4'); border.set(qn('w:space'), '0'); border.set(qn('w:color'), color)  
         tblBorders.append(border)
     tblPr.append(tblBorders)
 
-def create_docx(data: UniversalExamPaper, language: str):
+def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_size: float):
     doc = Document()
     
+    # Custom Margins
     for section in doc.sections:
-        section.top_margin = Inches(0.75)
-        section.bottom_margin = Inches(0.75)
-        section.left_margin = Inches(0.75)
-        section.right_margin = Inches(0.75)
+        section.top_margin = Inches(margin_size)
+        section.bottom_margin = Inches(margin_size)
+        section.left_margin = Inches(margin_size)
+        section.right_margin = Inches(margin_size)
         
     font_mapping = {"Bengali": "Kalpurush", "Hindi": "Mangal", "English": "Calibri"}
     selected_font = font_mapping.get(language, "Calibri")
         
     style = doc.styles['Normal']
     style.font.name = selected_font
-    style.font.size = Pt(11)
+    style.font.size = Pt(font_size)
     
     # Header
     p_school = doc.add_paragraph()
     p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_school = p_school.add_run(data.school_name)
     run_school.bold = True
-    run_school.font.name = selected_font
-    run_school.font.size = Pt(15)
+    run_school.font.size = Pt(font_size + 4)
     p_school.paragraph_format.space_after = Pt(2)
     
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_title = p_title.add_run(data.exam_title)
     run_title.bold = True
-    run_title.font.name = selected_font
-    run_title.font.size = Pt(12)
+    run_title.font.size = Pt(font_size + 1)
     p_title.paragraph_format.space_after = Pt(8)
     
     # Metadata Grid
@@ -215,7 +210,7 @@ def create_docx(data: UniversalExamPaper, language: str):
 
     def format_meta(label, val):
         if not val: return ""
-        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "समय" in val or "पूर्णांक" in val:
+        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "समय" in val or "पूर्णांक" in val:
             return val
         return f"{label} — {val}"
 
@@ -238,63 +233,41 @@ def create_docx(data: UniversalExamPaper, language: str):
                 p.paragraph_format.space_after = Pt(2)
                 for run in p.runs:
                     run.bold = True
-                    run.font.name = selected_font
-                    run.font.size = Pt(11)
+                    run.font.size = Pt(font_size)
                     
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
     
-    # Student Details Line
     p_info = doc.add_paragraph()
-    run_info = p_info.add_run(data.student_info_line)
-    run_info.font.name = selected_font
-    run_info.font.size = Pt(11)
+    p_info.add_run(data.student_info_line).font.size = Pt(font_size)
     p_info.paragraph_format.space_after = Pt(8)
     
-    # Divider
     p_div = doc.add_paragraph()
     p_div.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run_div = p_div.add_run("—" * 60)
-    run_div.font.name = selected_font
+    p_div.add_run("—" * 60)
     p_div.paragraph_format.space_after = Pt(12)
     
     # Layout Blocks
     for b in data.blocks:
-        if b.block_type == 'text_paragraph':
-            if b.text_content:
-                p = doc.add_paragraph()
-                p.paragraph_format.space_after = Pt(6)
-                run = p.add_run(b.text_content)
-                run.font.name = selected_font
-                is_num_start = b.text_content.strip().startswith((
-                    '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০',
-                    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
-                    '१', '२', '३', '४', '५', '६', '७', '८', '९', '०'
-                ))
-                if "।" in b.text_content or ":" in b.text_content or is_num_start:
-                    run.bold = True
-                    
+        if b.block_type == 'text_paragraph' and b.text_content:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(6)
+            run = p.add_run(b.text_content)
+            is_num_start = b.text_content.strip().startswith(('১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '१', '२', '३', '४', '५', '६', '७', '८', '९', '०'))
+            if "।" in b.text_content or ":" in b.text_content or is_num_start:
+                run.bold = True
+                
         elif b.block_type == 'list_block':
             if b.text_content:
-                p = doc.add_paragraph()
-                run = p.add_run(b.text_content)
-                run.font.name = selected_font
-                run.bold = True
-                p.paragraph_format.space_after = Pt(4)
+                doc.add_paragraph().add_run(b.text_content).bold = True
             if b.list_items:
                 for item in b.list_items:
                     lp = doc.add_paragraph()
                     lp.paragraph_format.left_indent = Inches(0.4)
-                    lp.paragraph_format.space_after = Pt(4)
-                    run_item = lp.add_run(item)
-                    run_item.font.name = selected_font
+                    lp.add_run(item)
                     
         elif b.block_type == 'grid_table_block':
             if b.text_content:
-                p = doc.add_paragraph()
-                run = p.add_run(b.text_content)
-                run.font.name = selected_font
-                run.bold = True
-                p.paragraph_format.space_after = Pt(4)
+                doc.add_paragraph().add_run(b.text_content).bold = True
             if b.table_rows and b.table_cols:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
@@ -304,84 +277,71 @@ def create_docx(data: UniversalExamPaper, language: str):
                         if r_idx < b.table_rows:
                             for c_idx, val in enumerate(row_items):
                                 if c_idx < b.table_cols:
-                                    cell = tbl.rows[r_idx].cells[c_idx]
-                                    cell.paragraphs[0].text = val
-                                    for r_run in cell.paragraphs[0].runs:
-                                        r_run.font.name = selected_font
-                doc.add_paragraph().paragraph_format.space_after = Pt(8)
+                                    tbl.rows[r_idx].cells[c_idx].paragraphs[0].text = val
+                doc.add_paragraph()
                 
         elif b.block_type == 'column_layout_block':
             if b.text_content:
-                p = doc.add_paragraph()
-                run = p.add_run(b.text_content)
-                run.font.name = selected_font
-                run.bold = True
-                p.paragraph_format.space_after = Pt(4)
+                doc.add_paragraph().add_run(b.text_content).bold = True
             if b.columns_data:
                 num_cols = len(b.columns_data)
                 max_rows = max(len(col) for col in b.columns_data)
                 col_tbl = doc.add_table(rows=max_rows, cols=num_cols)
-                col_tbl.autofit = False
                 col_width = Inches(7.0 / num_cols)
                 for c in range(num_cols):
                     col_tbl.columns[c].width = col_width
                     col_items = b.columns_data[c]
                     for r in range(max_rows):
-                        cell = col_tbl.rows[r].cells[c]
                         if r < len(col_items):
-                            cell.paragraphs[0].text = col_items[r]
-                            cell.paragraphs[0].paragraph_format.left_indent = Inches(0.1)
-                            for r_run in cell.paragraphs[0].runs:
-                                r_run.font.name = selected_font
-                doc.add_paragraph().paragraph_format.space_after = Pt(8)
+                            col_tbl.rows[r].cells[c].paragraphs[0].text = col_items[r]
+                doc.add_paragraph()
                 
         elif b.block_type == 'drawing_box_block':
             if b.text_content:
-                p = doc.add_paragraph()
-                run = p.add_run(b.text_content)
-                run.font.name = selected_font
-                run.bold = True
-                p.paragraph_format.space_after = Pt(4)
+                doc.add_paragraph().add_run(b.text_content).bold = True
             box_tbl = doc.add_table(rows=1, cols=1)
             box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
             box_tbl.rows[0].height = Inches(b.box_height_inches or 1.5)
             set_table_borders(box_tbl, "888888")
-            doc.add_paragraph().paragraph_format.space_after = Pt(8)
+            doc.add_paragraph()
 
     bio = io.BytesIO()
     doc.save(bio)
     return bio.getvalue()
 
 # --- 3. Web UI Body ---
-
 st.markdown('<p class="main-title">AI Vision Matrix</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Instantly materialize printed exams into beautifully structured Word files.</p>', unsafe_allow_html=True)
-st.write("") # Spacer
+st.markdown('<p class="sub-title">Sleek, instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
+st.write("")
 
 # Sidebar Settings
 with st.sidebar:
-    st.markdown("<h2 style='text-align: center; color: #00F260;'>🔮 Setup</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #00DFD8; font-family: Space Grotesk;'>🔮 System Engine</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
-    api_key = st.text_input("🔑 Gemini Pro API Key", type="password", help="Paste your Google AI Studio key here.")
+    api_key = st.text_input("🔑 Gemini Pro API Key", type="password")
     if not api_key:
-        st.warning("⚠️ API Key is required to run the AI engine.")
+        st.warning("⚠️ API key required to launch processing.")
         
-    exam_language = st.selectbox(
-        "🌐 Target Language",
-        ["Bengali", "English", "Hindi"],
-        index=0,
-        help="Select the language written in the images."
-    )
+    exam_language = st.selectbox("🌐 Target Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
-    st.info("📌 **Pro-Tips**\n\n1️⃣ File names should be sorted chronologically (e.g., `page1.jpg`, `page2.jpg`).\n\n2️⃣ Ensure images are well-lit with clear text.")
+    st.markdown("<h3 style='color: #FF007A; font-family: Space Grotesk;'>🎛️ Styling Panel</h3>", unsafe_allow_html=True)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        custom_font_size = st.number_input("Font Size (Pt)", min_value=8, max_value=18, value=11)
+    with col_b:
+        custom_margin = st.number_input("Margins (In)", min_value=0.5, max_value=2.0, value=0.75, step=0.1)
 
-# Main Interactive Area (Using wider columns for the new layout)
+    st.markdown("---")
+    st.info("💡 **Pro-Tip:** Arrange your files chronologically (e.g. `1.png`, `2.png`) to ensure seamless layouts.")
+
+# Main Interactive Workspace
 col1, col_space, col2 = st.columns([1.2, 0.1, 1])
 
 with col1:
-    st.markdown("<h3 style='color: #4776E6;'>📸 1. Feed the Matrix</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #7928CA;'>📸 1. Feed Visual Data</h3>", unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
         f"Drop {exam_language} image files here", 
         type=["jpg", "jpeg", "png"], 
@@ -390,38 +350,33 @@ with col1:
     )
 
 with col2:
-    st.markdown("<h3 style='color: #8E54E9;'>⚡ 2. Initialize Core</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #FF007A;'>⚡ 2. Process & Extract</h3>", unsafe_allow_html=True)
     if not uploaded_files:
-        st.info("👈 Waiting for visual data input on the left...")
+        st.info("👈 Please drop your image segments in the dropzone to continue.")
     else:
-        st.success(f"📦 {len(uploaded_files)} Data Blocks Ready")
+        st.success(f"📂 {len(uploaded_files)} Pages Registered & Ready")
         
-        if st.button("✨ Digitize Now"):
+        if st.button("✨ Compile Document"):
             if not api_key:
-                st.error("Access Denied: Missing API Key in sidebar.")
+                st.error("Error: Please provide your Gemini API Key in the sidebar.")
             else:
-                with st.status(f"🧠 Linking with Gemini AI for {exam_language} parsing...", expanded=True) as status:
+                with st.status(f"🧠 Parsing structure with Gemini 3.5 Flash...", expanded=True) as status:
                     try:
-                        st.write("🔄 Aligning files chronologically...")
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
-                        
-                        st.write("👁️ Opening AI Vision protocols...")
                         img_list = [Image.open(f) for f in sorted_files]
                         
-                        st.write("⚡ Executing Layout Extraction Algorithms (takes ~10 seconds)...")
                         client = genai.Client(api_key=api_key)
                         
                         system_instruction = (
                             f"You are an expert layout-agnostic document OCR parser specialized in parsing {exam_language} exam papers. "
                             f"Read header info from Page 1, and sequentialize all questions across all pages into standard structured layout blocks. "
-                            f"Preserve original {exam_language} spellings and formatting. "
-                            f"Map visual formats to 'blocks' array: "
-                            f"'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block' (for MCQs/Matching), or 'drawing_box_block'."
+                            f"Map visual formats to 'blocks' array: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', or 'drawing_box_block'."
                         )
                         
-                        prompt = f"Analyze all these pages in order. The text extracted must be completely faithful to the {exam_language} words present."
+                        prompt = f"Analyze all pages in order. Extract layout structure and text completely faithfully in {exam_language}."
                         contents = [prompt] + img_list
                         
+                        st.write("🌌 Running high-fidelity OCR scanning...")
                         response = client.models.generate_content(
                             model='gemini-3.5-flash',
                             contents=contents,
@@ -433,22 +388,27 @@ with col2:
                             )
                         )
                         
-                        st.write("📝 Synthesizing Microsoft Word Document...")
+                        st.write("✏️ Injecting dynamic sizing & font styling...")
                         raw_json = json.loads(response.text)
                         exam_data = UniversalExamPaper(**raw_json)
-                        word_bytes = create_docx(exam_data, exam_language)
+                        word_bytes = create_docx(exam_data, exam_language, int(custom_font_size), float(custom_margin))
                         
-                        status.update(label="✅ Operations Complete!", state="complete", expanded=False)
+                        status.update(label="🔮 Process Fully Manifested!", state="complete", expanded=False)
                         
-                        # Generate Download
+                        # Generate Download Button
                         st.download_button(
-                            label="📥 Download Structured Document",
+                            label="📥 Download Stylized Document",
                             data=word_bytes,
                             file_name=f"Digitized_{exam_language}_Exam.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         )
                         st.balloons()
                         
+                        # X-Ray Data Preview
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        with st.expander("👀 View X-Ray Live Data"):
+                            st.json(raw_json)
+                        
                     except Exception as e:
-                        status.update(label="❌ Error in Processing", state="error")
+                        status.update(label="❌ Compile Interrupted", state="error")
                         st.error(f"Diagnostics: {e}")

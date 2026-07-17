@@ -52,7 +52,7 @@ st.markdown("""
         color: #8E8E93; /* iOS standard secondary gray */
         font-size: 1.1rem;
         font-weight: 400;
-        margin-bottom: 40px;
+        margin-bottom: 20px;
         letter-spacing: -0.2px;
     }
 
@@ -274,7 +274,46 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
 # --- 3. Web UI Body ---
 st.markdown('<p class="main-title">Exam Digitizer Pro</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
-st.write("")
+
+# Clean SVG Explainer Graphic (Image -> AI -> Document)
+st.markdown("""
+<div style="display: flex; justify-content: center; align-items: center; padding: 10px 0 40px 0; gap: 25px; opacity: 0.8;">
+   <!-- Image File Icon -->
+   <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+      <polyline points="21 15 16 10 5 21"></polyline>
+   </svg>
+   
+   <!-- Blue Processing Arrow -->
+   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <polyline points="12 5 19 12 12 19"></polyline>
+   </svg>
+
+   <!-- AI Brain Icon -->
+   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
+   </svg>
+
+   <!-- Blue Processing Arrow -->
+   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <polyline points="12 5 19 12 12 19"></polyline>
+   </svg>
+
+   <!-- Word Document Icon -->
+   <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+      <line x1="16" y1="13" x2="8" y2="13"></line>
+      <line x1="16" y1="17" x2="8" y2="17"></line>
+      <polyline points="10 9 9 9 8 9"></polyline>
+   </svg>
+</div>
+""", unsafe_allow_html=True)
+
 
 # Sidebar Settings
 with st.sidebar:

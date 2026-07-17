@@ -37,7 +37,7 @@ st.markdown("""
     
     /* Massive High-Impact Gradient Title */
     .main-title {
-        font-size: 5rem; /* Increased size for visual impact */
+        font-size: clamp(3.5rem, 8vw, 6.5rem); /* Massive on desktop, scales down safely on mobile */
         font-weight: 900;
         text-align: center;
         background: linear-gradient(135deg, #007AFF 0%, #FF2D55 50%, #5856D6 100%);
@@ -63,18 +63,20 @@ st.markdown("""
     /* Short, Stylized Explainer */
     .hero-explainer {
         text-align: center;
-        font-size: 1.3rem;
+        font-size: 1.05rem; /* Scaled down appropriately */
         font-weight: 400;
-        color: #8E8E93; /* Classic iOS secondary gray */
+        color: var(--text-color); /* Fixes Dark Mode: Automatically adapts to light/dark theme */
+        opacity: 0.75; 
         max-width: 650px;
         margin: 15px auto 40px auto;
         line-height: 1.5;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.2px;
     }
     
     .hero-explainer strong {
         font-weight: 600;
-        color: #1C1C1E; /* Darker text for emphasis */
+        color: var(--text-color); /* Fixes Dark Mode: Automatically adapts to light/dark theme */
+        opacity: 1; /* Makes the bold text pop slightly more */
     }
 
     .section-header {

@@ -15,132 +15,83 @@ import io
 
 # --- Page Setup (MUST BE FIRST) ---
 st.set_page_config(
-    page_title="AI Exam Digitizer Pro",
-    page_icon="🔮",
+    page_title="Exam Digitizer Pro",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # --- Session State Initialization ---
-# This allows the app to "remember" the AI results so it doesn't re-run 
-# the API when you change the font size or margins.
 if "exam_data" not in st.session_state:
     st.session_state.exam_data = None
 if "raw_json" not in st.session_state:
     st.session_state.raw_json = None
 
-# --- 🎨 Ultra-Premium Typographic Custom CSS ---
+# --- Minimalist iOS / One UI Custom CSS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* Global Font Overrides */
     html, body, [class*="css"] {
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
-    h1, h2, h3, .main-title, .section-header {
-        font-family: 'Space Grotesk', sans-serif !important;
-    }
-    
-    /* Cosmic Neon Gradient Title */
+    /* Clean Title */
     .main-title {
-        font-size: 3.8rem;
-        font-weight: 900;
+        font-size: 2.5rem;
+        font-weight: 700;
         text-align: center;
-        background: linear-gradient(135deg, #FF007A 0%, #7928CA 50%, #00DFD8 100%);
-        background-size: 200% auto;
-        color: #fff;
-        background-clip: text;
-        text-fill-color: transparent;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: gradientFlow 4s ease infinite;
-        margin-bottom: -5px;
-        padding-top: 15px;
-        letter-spacing: -1px;
-    }
-    
-    @keyframes gradientFlow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+        letter-spacing: -0.5px;
+        margin-bottom: 5px;
+        padding-top: 20px;
     }
     
     /* Subtitle */
     .sub-title {
         text-align: center;
-        color: #94A3B8;
-        font-size: 1.15rem;
+        color: #8E8E93; /* iOS standard secondary gray */
+        font-size: 1.1rem;
         font-weight: 400;
-        margin-bottom: 35px;
-        letter-spacing: 0.2px;
+        margin-bottom: 40px;
+        letter-spacing: -0.2px;
     }
 
-    /* Glassmorphism Sidebar */
-    [data-testid="stSidebar"] {
-        background: rgba(15, 23, 42, 0.4) !important;
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    /* Minimalist Headers */
+    .section-header {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin-bottom: 15px;
+        letter-spacing: -0.3px;
     }
 
-    /* Interactive Cyber Drag & Dropzone */
+    /* Clean Dropzone */
     [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #7928CA !important;
-        background-color: rgba(121, 40, 202, 0.03) !important;
-        border-radius: 16px !important;
+        border: 2px dashed #D1D1D6 !important;
+        background-color: transparent !important;
+        border-radius: 14px !important;
         padding: 40px 20px !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: border-color 0.2s ease;
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        background-color: rgba(0, 223, 216, 0.04) !important;
-        border-color: #00DFD8 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(0, 223, 216, 0.15);
+        border-color: #007AFF !important;
     }
 
-    /* Glowing Primary Trigger Button */
-    .stButton>button {
+    /* iOS Blue Primary Buttons */
+    .stButton>button, .stDownloadButton>button {
         width: 100%;
-        background-image: linear-gradient(135deg, #7928CA 0%, #FF007A 100%);
-        padding: 14px 20px;
-        text-align: center;
-        transition: 0.4s;
-        background-size: 150% auto;
+        background-color: #007AFF !important; 
         color: white !important;
-        border-radius: 12px;
-        border: none;
-        font-weight: 700;
-        font-family: 'Space Grotesk', sans-serif !important;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(121, 40, 202, 0.3);
+        border-radius: 12px !important;
+        border: none !important;
+        padding: 12px 20px !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        transition: all 0.2s ease;
+        box-shadow: none !important;
     }
-    .stButton>button:hover {
-        background-position: right center;
-        box-shadow: 0 8px 25px rgba(255, 0, 122, 0.5);
-        transform: translateY(-2px);
-    }
-    
-    /* Glowing Success Download Button */
-    .stDownloadButton>button {
-        width: 100%;
-        background-image: linear-gradient(135deg, #00DFD8 0%, #00F260 100%);
-        padding: 14px 20px;
-        text-align: center;
-        transition: 0.4s;
-        background-size: 150% auto;
-        color: #0F172A !important; 
-        border-radius: 12px;
-        border: none;
-        font-weight: 700;
-        font-family: 'Space Grotesk', sans-serif !important;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(0, 223, 216, 0.3);
-    }
-    .stDownloadButton>button:hover {
-        background-position: right center;
-        box-shadow: 0 8px 25px rgba(0, 242, 96, 0.5);
-        transform: translateY(-2px);
+    .stButton>button:hover, .stDownloadButton>button:hover {
+        background-color: #0056b3 !important;
+        transform: scale(0.98);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -170,7 +121,6 @@ class UniversalExamPaper(BaseModel):
 
 # --- 2. Helper Functions ---
 def optimize_image(img, max_width=1600):
-    """Resizes images to prevent API timeouts and strips heavy alpha channels."""
     if img.width > max_width:
         ratio = max_width / img.width
         new_size = (max_width, int(img.height * ratio))
@@ -189,7 +139,6 @@ def set_table_borders(table, color="cccccc"):
 def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_size: float):
     doc = Document()
     
-    # Custom Margins
     for section in doc.sections:
         section.top_margin = Inches(margin_size)
         section.bottom_margin = Inches(margin_size)
@@ -203,7 +152,6 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     style.font.name = selected_font
     style.font.size = Pt(font_size)
     
-    # Header
     p_school = doc.add_paragraph()
     p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_school = p_school.add_run(data.school_name)
@@ -218,7 +166,6 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     run_title.font.size = Pt(font_size + 1)
     p_title.paragraph_format.space_after = Pt(8)
     
-    # Metadata Grid
     class_label = "Class" if language == "English" else ("শ্রেণী" if language == "Bengali" else "कक्षा")
     marks_label = "Full Marks" if language == "English" else ("পূর্ণমান" if language == "Bengali" else "पूर्णांक")
     subject_label = "Subject" if language == "English" else ("বিষয়" if language == "Bengali" else "विषय")
@@ -262,7 +209,6 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     p_div.add_run("—" * 60)
     p_div.paragraph_format.space_after = Pt(12)
     
-    # Layout Blocks
     for b in data.blocks:
         if b.block_type == 'text_paragraph' and b.text_content:
             p = doc.add_paragraph()
@@ -326,23 +272,22 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     return bio.getvalue()
 
 # --- 3. Web UI Body ---
-st.markdown('<p class="main-title">AI Vision Matrix</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Sleek, instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">Exam Digitizer Pro</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
 st.write("")
 
 # Sidebar Settings
 with st.sidebar:
-    st.markdown("<h2 style='text-align: center; color: #00DFD8; font-family: Space Grotesk;'>🔮 System Engine</h2>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown('<p class="section-header">System Settings</p>', unsafe_allow_html=True)
     
-    api_key = st.text_input("🔑 Gemini Pro API Key", type="password")
+    api_key = st.text_input("Gemini Pro API Key", type="password")
     if not api_key:
-        st.warning("⚠️ API key required to launch processing.")
+        st.warning("API key required to process documents.")
         
-    exam_language = st.selectbox("🌐 Target Language", ["Bengali", "English", "Hindi"])
+    exam_language = st.selectbox("Target Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
-    st.markdown("<h3 style='color: #FF007A; font-family: Space Grotesk;'>🎛️ Styling Panel</h3>", unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Document Styling</p>', unsafe_allow_html=True)
     
     col_a, col_b = st.columns(2)
     with col_a:
@@ -351,13 +296,13 @@ with st.sidebar:
         custom_margin = st.number_input("Margins (In)", min_value=0.5, max_value=2.0, value=0.75, step=0.1)
 
     st.markdown("---")
-    st.info("💡 **Pro-Tip:** Adjust font and margins anytime *after* compiling! The document will update instantly.")
+    st.info("Tip: Adjust font and margins anytime after compiling. The document will update instantly.")
 
 # Main Interactive Workspace
 col1, col_space, col2 = st.columns([1.2, 0.1, 1])
 
 with col1:
-    st.markdown("<h3 style='color: #7928CA;'>📸 1. Feed Visual Data</h3>", unsafe_allow_html=True)
+    st.markdown('<p class="section-header">1. Upload Files</p>', unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
         f"Drop {exam_language} image files here", 
         type=["jpg", "jpeg", "png"], 
@@ -365,34 +310,31 @@ with col1:
         label_visibility="collapsed"
     )
     
-    # If a user uploads new files, clear the old session state data
     if uploaded_files and st.session_state.exam_data and len(uploaded_files) != getattr(st.session_state, 'last_upload_count', 0):
         st.session_state.exam_data = None
         st.session_state.raw_json = None
     st.session_state.last_upload_count = len(uploaded_files)
 
 with col2:
-    st.markdown("<h3 style='color: #FF007A;'>⚡ 2. Process & Extract</h3>", unsafe_allow_html=True)
+    st.markdown('<p class="section-header">2. Process Images</p>', unsafe_allow_html=True)
     if not uploaded_files:
-        st.info("👈 Please drop your image segments in the dropzone to continue.")
+        st.info("Please drop your image files in the dropzone to continue.")
     else:
-        st.success(f"📂 {len(uploaded_files)} Pages Registered & Ready")
+        st.success(f"{len(uploaded_files)} Pages Ready for Processing")
         
-        if st.button("✨ Compile Document"):
+        if st.button("Compile Document"):
             if not api_key:
-                st.error("Error: Please provide your Gemini API Key in the sidebar.")
+                st.error("Please provide your Gemini API Key in the sidebar.")
             else:
-                with st.status(f"🧠 Parsing structure with Gemini...", expanded=True) as status:
+                with st.status(f"Parsing structure with AI...", expanded=True) as status:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         
-                        # --- MODIFIED: Optimize Images ---
-                        st.write("🖼️ Optimizing images for processing...")
+                        st.write("Optimizing images for processing...")
                         img_list = [optimize_image(Image.open(f)) for f in sorted_files]
                         
                         client = genai.Client(api_key=api_key)
                         
-                        # --- MODIFIED: Bulletproof Prompt ---
                         system_instruction = (
                             f"You are an expert, highly precise document OCR parser specialized in {exam_language} exam papers. "
                             f"RULES: "
@@ -406,7 +348,7 @@ with col2:
                         prompt = f"Analyze all pages in order. Extract layout structure and text completely faithfully in {exam_language}."
                         contents = [prompt] + img_list
                         
-                        st.write("🌌 Running high-fidelity OCR scanning...")
+                        st.write("Running high-fidelity OCR scanning...")
                         
                         fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']
                         response = None
@@ -428,7 +370,7 @@ with col2:
                             except Exception as e:
                                 error_msg = str(e)
                                 if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg:
-                                    st.warning(f"⚠️ {model_name} is currently busy. Rerouting to backup server...")
+                                    st.warning(f"{model_name} is currently busy. Rerouting to backup server...")
                                     last_error = error_msg
                                     continue
                                 else:
@@ -437,25 +379,20 @@ with col2:
                         if not response:
                             raise Exception(f"All backup servers are currently busy. Please try again in a few minutes. (Last Error: {last_error})")
                         
-                        # --- MODIFIED: Save to Session State ---
                         raw_json = json.loads(response.text)
                         st.session_state.exam_data = UniversalExamPaper(**raw_json)
                         st.session_state.raw_json = raw_json
                         
-                        status.update(label="🔮 Process Fully Manifested!", state="complete", expanded=False)
-                        st.balloons()
+                        status.update(label="Process Complete", state="complete", expanded=False)
                         
                     except Exception as e:
-                        status.update(label="❌ Compile Interrupted", state="error")
+                        status.update(label="Compile Interrupted", state="error")
                         st.error(f"Diagnostics: {e}")
 
-        # --- MODIFIED: Dynamic Rendering Outside the Button ---
-        # If we have processed data in the session state, render the download section
         if st.session_state.exam_data:
             st.markdown("---")
-            st.success("✅ **Document Ready!** You can adjust the Font Size and Margins in the sidebar, and the download will update instantly without needing to re-compile.")
+            st.success("Document Ready. Adjust Font Size and Margins in the sidebar; the download will update automatically.")
             
-            # Generate the Word Document using current sidebar slider values
             word_bytes = create_docx(
                 st.session_state.exam_data, 
                 exam_language, 
@@ -463,15 +400,13 @@ with col2:
                 float(custom_margin)
             )
             
-            # Generate Download Button
             st.download_button(
-                label="📥 Download Stylized Document",
+                label="Download Stylized Document",
                 data=word_bytes,
                 file_name=f"Digitized_{exam_language}_Exam.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
             
-            # X-Ray Data Preview
             st.markdown("<br>", unsafe_allow_html=True)
-            with st.expander("👀 View X-Ray Live Data"):
+            with st.expander("View Live JSON Data"):
                 st.json(st.session_state.raw_json)

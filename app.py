@@ -15,7 +15,7 @@ import io
 
 # --- Page Setup ---
 st.set_page_config(
-    page_title="Exam Digitizer Pro",
+    page_title="Question Paper Studio",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -273,7 +273,7 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     return bio.getvalue()
 
 # --- 3. Web UI Body ---
-st.markdown('<p class="main-title">Exam Digitizer Pro</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">Question Paper Studio</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Instantaneous digitizer for printed and handwritten exams.</p>', unsafe_allow_html=True)
 
 st.markdown("""
@@ -316,7 +316,6 @@ with st.sidebar:
         
     exam_language = st.selectbox("Target Language", ["Bengali", "English", "Hindi"])
     
-    # --- ADDED: High Accuracy Engine Toggle ---
     ai_engine = st.radio("Processing Engine", ["Speed (Gemini Flash)", "High Accuracy (Gemini Pro)"])
     
     st.markdown("---")
@@ -368,7 +367,6 @@ with col2:
                         
                         client = genai.Client(api_key=api_key)
                         
-                        # --- ADDED: Strict instructions for diagram reading ---
                         system_instruction = (
                             f"You are an expert, highly precise document OCR parser specialized in {exam_language} exam papers. "
                             f"RULES: "

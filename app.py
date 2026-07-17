@@ -141,7 +141,8 @@ class UniversalExamPaper(BaseModel):
 
 
 # --- 2. Helper Functions ---
-def optimize_image(img, max_width=1600):
+# --- MODIFIED: Increased resolution to 2500 for better OCR accuracy ---
+def optimize_image(img, max_width=2500):
     if img.width > max_width:
         ratio = max_width / img.width
         new_size = (max_width, int(img.height * ratio))
@@ -399,11 +400,12 @@ with col2:
                         
                         client = genai.Client(api_key=api_key)
                         
+                        # --- MODIFIED: Strict prompt to prevent AI guessing/autocorrecting ---
                         system_instruction = (
-                            f"You are an expert, highly precise document OCR parser specialized in {exam_language} exam papers. "
+                            f"You are a strict, highly precise document OCR parser specialized in {exam_language} exam papers. "
                             f"RULES: "
-                            f"1. Extract text exactly as written. Do not solve the questions. "
-                            f"2. Handle messy handwriting accurately. If completely illegible, write '[ILLEGIBLE]'. "
+                            f"1. TRANSCRIBE EXACTLY. Extract text character-for-character. DO NOT autocorrect spelling or grammar. If a word is misspelled in the image, keep it misspelled. "
+                            f"2. Handle messy handwriting accurately. If a specific word is completely illegible, write '[ILLEGIBLE]' instead of guessing. "
                             f"3. For images, diagrams, or graphs, use 'drawing_box_block'. You MUST write a brief description of what the image shows in the 'diagram_description' field. "
                             f"4. Map visual formats strictly to the 'blocks' array: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', or 'drawing_box_block'."
                         )
@@ -413,7 +415,6 @@ with col2:
                         
                         st.write("Running high-fidelity OCR scanning...")
                         
-                        # --- MODIFIED: Fixed fallback models to purely 3.5/3.1 series ---
                         if "Pro" in ai_engine:
                             fallback_models = ['gemini-3.5-pro', 'gemini-3.1-pro-preview']
                         else:

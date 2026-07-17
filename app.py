@@ -37,7 +37,7 @@ st.markdown("""
     
     /* Massive High-Impact Gradient Title */
     .main-title {
-        font-size: clamp(3.5rem, 8vw, 6.5rem); /* Massive on desktop, scales down safely on mobile */
+        font-size: clamp(3.5rem, 8vw, 6.5rem); 
         font-weight: 900;
         text-align: center;
         background: linear-gradient(135deg, #007AFF 0%, #FF2D55 50%, #5856D6 100%);
@@ -63,9 +63,9 @@ st.markdown("""
     /* Short, Stylized Explainer */
     .hero-explainer {
         text-align: center;
-        font-size: 1.05rem; /* Scaled down appropriately */
+        font-size: 1.05rem; 
         font-weight: 400;
-        color: var(--text-color); /* Fixes Dark Mode: Automatically adapts to light/dark theme */
+        color: var(--text-color); 
         opacity: 0.75; 
         max-width: 650px;
         margin: 15px auto 40px auto;
@@ -75,8 +75,8 @@ st.markdown("""
     
     .hero-explainer strong {
         font-weight: 600;
-        color: var(--text-color); /* Fixes Dark Mode: Automatically adapts to light/dark theme */
-        opacity: 1; /* Makes the bold text pop slightly more */
+        color: var(--text-color); 
+        opacity: 1; 
     }
 
     .section-header {
@@ -413,11 +413,11 @@ with col2:
                         
                         st.write("Running high-fidelity OCR scanning...")
                         
-                        # Route based on user selection
+                        # --- MODIFIED: Latest models first, reversed order ---
                         if "Pro" in ai_engine:
-                            fallback_models = ['gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-3.5-pro']
+                            fallback_models = ['gemini-3.5-pro', 'gemini-2.5-pro']
                         else:
-                            fallback_models = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-2.5-flash']
+                            fallback_models = ['gemini-3.5-flash', 'gemini-2.5-flash']
                             
                         response = None
                         last_error = None
@@ -437,15 +437,16 @@ with col2:
                                 break
                             except Exception as e:
                                 error_msg = str(e)
-                                if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg:
-                                    st.warning(f"{model_name} is currently busy. Rerouting to backup server...")
+                                # --- MODIFIED: Added 404 and NOT_FOUND to the skip list ---
+                                if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg or "404" in error_msg or "NOT_FOUND" in error_msg:
+                                    st.warning(f"Model {model_name} unavailable or busy. Rerouting...")
                                     last_error = error_msg
                                     continue
                                 else:
                                     raise e
                                     
                         if not response:
-                            raise Exception(f"All backup servers are currently busy. Please try again in a few minutes. (Last Error: {last_error})")
+                            raise Exception(f"All backup servers are currently busy or unavailable. Please try again in a few minutes. (Last Error: {last_error})")
                         
                         raw_json = json.loads(response.text)
                         st.session_state.exam_data = UniversalExamPaper(**raw_json)

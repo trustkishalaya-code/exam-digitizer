@@ -413,11 +413,11 @@ with col2:
                         
                         st.write("Running high-fidelity OCR scanning...")
                         
-                        # --- MODIFIED: Latest models first, reversed order ---
+                        # --- MODIFIED: Fixed fallback models to purely 3.5/3.1 series ---
                         if "Pro" in ai_engine:
-                            fallback_models = ['gemini-3.5-pro', 'gemini-2.5-pro']
+                            fallback_models = ['gemini-3.5-pro', 'gemini-3.1-pro-preview']
                         else:
-                            fallback_models = ['gemini-3.5-flash', 'gemini-2.5-flash']
+                            fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite']
                             
                         response = None
                         last_error = None
@@ -437,7 +437,6 @@ with col2:
                                 break
                             except Exception as e:
                                 error_msg = str(e)
-                                # --- MODIFIED: Added 404 and NOT_FOUND to the skip list ---
                                 if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg or "404" in error_msg or "NOT_FOUND" in error_msg:
                                     st.warning(f"Model {model_name} unavailable or busy. Rerouting...")
                                     last_error = error_msg

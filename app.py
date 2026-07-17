@@ -121,7 +121,7 @@ st.markdown("""
         text-align: center;
         transition: 0.4s;
         background-size: 150% auto;
-        color: #0F172A !important; /* Dark text for high contrast on neon green/blue */
+        color: #0F172A !important; 
         border-radius: 12px;
         border: none;
         font-weight: 700;
@@ -360,7 +360,7 @@ with col2:
             if not api_key:
                 st.error("Error: Please provide your Gemini API Key in the sidebar.")
             else:
-                with st.status(f"🧠 Parsing structure with Gemini 3.5 Flash...", expanded=True) as status:
+                with st.status(f"🧠 Parsing structure with Gemini...", expanded=True) as status:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         img_list = [Image.open(f) for f in sorted_files]
@@ -377,16 +377,37 @@ with col2:
                         contents = [prompt] + img_list
                         
                         st.write("🌌 Running high-fidelity OCR scanning...")
-                        response = client.models.generate_content(
-                            model='gemini-3.5-flash',
-                            contents=contents,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction,
-                                response_mime_type="application/json",
-                                response_schema=UniversalExamPaper,
-                                temperature=0.1
-                            )
-                        )
+                        
+                        # --- MODIFIED SECTION: Automatic Fallback ---
+                        fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']
+                        response = None
+                        last_error = None
+
+                        for model_name in fallback_models:
+                            try:
+                                response = client.models.generate_content(
+                                    model=model_name,
+                                    contents=contents,
+                                    config=types.GenerateContentConfig(
+                                        system_instruction=system_instruction,
+                                        response_mime_type="application/json",
+                                        response_schema=UniversalExamPaper,
+                                        temperature=0.1
+                                    )
+                                )
+                                break # Exit the loop if successful
+                            except Exception as e:
+                                error_msg = str(e)
+                                if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg:
+                                    st.warning(f"⚠️ {model_name} is currently busy. Rerouting to backup server...")
+                                    last_error = error_msg
+                                    continue # Try the next model
+                                else:
+                                    raise e # Stop immediately for bad API keys or schema errors
+                                    
+                        if not response:
+                            raise Exception(f"All backup servers are currently busy. Please try again in a few minutes. (Last Error: {last_error})")
+                        # --- END MODIFIED SECTION ---
                         
                         st.write("✏️ Injecting dynamic sizing & font styling...")
                         raw_json = json.loads(response.text)

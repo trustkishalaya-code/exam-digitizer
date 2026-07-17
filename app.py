@@ -21,6 +21,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- Session State Initialization ---
+# This allows the app to "remember" the AI results so it doesn't re-run 
+# the API when you change the font size or margins.
+if "exam_data" not in st.session_state:
+    st.session_state.exam_data = None
+if "raw_json" not in st.session_state:
+    st.session_state.raw_json = None
+
 # --- 🎨 Ultra-Premium Typographic Custom CSS ---
 st.markdown("""
 <style>
@@ -160,7 +168,15 @@ class UniversalExamPaper(BaseModel):
     blocks: List[LayoutBlock] = Field(description="Chronological order of layout blocks")
 
 
-# --- 2. Helper Functions for Word Styling ---
+# --- 2. Helper Functions ---
+def optimize_image(img, max_width=1600):
+    """Resizes images to prevent API timeouts and strips heavy alpha channels."""
+    if img.width > max_width:
+        ratio = max_width / img.width
+        new_size = (max_width, int(img.height * ratio))
+        img = img.resize(new_size, Image.Resampling.LANCZOS)
+    return img.convert('RGB')
+
 def set_table_borders(table, color="cccccc"):
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement('w:tblBorders')
@@ -335,7 +351,7 @@ with st.sidebar:
         custom_margin = st.number_input("Margins (In)", min_value=0.5, max_value=2.0, value=0.75, step=0.1)
 
     st.markdown("---")
-    st.info("💡 **Pro-Tip:** Arrange your files chronologically (e.g. `1.png`, `2.png`) to ensure seamless layouts.")
+    st.info("💡 **Pro-Tip:** Adjust font and margins anytime *after* compiling! The document will update instantly.")
 
 # Main Interactive Workspace
 col1, col_space, col2 = st.columns([1.2, 0.1, 1])
@@ -348,6 +364,12 @@ with col1:
         accept_multiple_files=True,
         label_visibility="collapsed"
     )
+    
+    # If a user uploads new files, clear the old session state data
+    if uploaded_files and st.session_state.exam_data and len(uploaded_files) != getattr(st.session_state, 'last_upload_count', 0):
+        st.session_state.exam_data = None
+        st.session_state.raw_json = None
+    st.session_state.last_upload_count = len(uploaded_files)
 
 with col2:
     st.markdown("<h3 style='color: #FF007A;'>⚡ 2. Process & Extract</h3>", unsafe_allow_html=True)
@@ -363,14 +385,22 @@ with col2:
                 with st.status(f"🧠 Parsing structure with Gemini...", expanded=True) as status:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
-                        img_list = [Image.open(f) for f in sorted_files]
+                        
+                        # --- MODIFIED: Optimize Images ---
+                        st.write("🖼️ Optimizing images for processing...")
+                        img_list = [optimize_image(Image.open(f)) for f in sorted_files]
                         
                         client = genai.Client(api_key=api_key)
                         
+                        # --- MODIFIED: Bulletproof Prompt ---
                         system_instruction = (
-                            f"You are an expert layout-agnostic document OCR parser specialized in parsing {exam_language} exam papers. "
-                            f"Read header info from Page 1, and sequentialize all questions across all pages into standard structured layout blocks. "
-                            f"Map visual formats to 'blocks' array: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', or 'drawing_box_block'."
+                            f"You are an expert, highly precise document OCR parser specialized in {exam_language} exam papers. "
+                            f"RULES: "
+                            f"1. Extract text exactly as written. Do not summarize or solve the questions. "
+                            f"2. If handwriting is completely illegible, insert '[ILLEGIBLE]' rather than guessing. "
+                            f"3. Preserve all mathematical symbols, fractions, and numbering perfectly. "
+                            f"4. If there is a diagram, image, or graph, create a 'drawing_box_block' to leave empty space for it. "
+                            f"Map visual formats strictly to the 'blocks' array: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', or 'drawing_box_block'."
                         )
                         
                         prompt = f"Analyze all pages in order. Extract layout structure and text completely faithfully in {exam_language}."
@@ -378,7 +408,6 @@ with col2:
                         
                         st.write("🌌 Running high-fidelity OCR scanning...")
                         
-                        # --- MODIFIED SECTION: Automatic Fallback ---
                         fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash']
                         response = None
                         last_error = None
@@ -395,41 +424,54 @@ with col2:
                                         temperature=0.1
                                     )
                                 )
-                                break # Exit the loop if successful
+                                break
                             except Exception as e:
                                 error_msg = str(e)
                                 if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg:
                                     st.warning(f"⚠️ {model_name} is currently busy. Rerouting to backup server...")
                                     last_error = error_msg
-                                    continue # Try the next model
+                                    continue
                                 else:
-                                    raise e # Stop immediately for bad API keys or schema errors
+                                    raise e
                                     
                         if not response:
                             raise Exception(f"All backup servers are currently busy. Please try again in a few minutes. (Last Error: {last_error})")
-                        # --- END MODIFIED SECTION ---
                         
-                        st.write("✏️ Injecting dynamic sizing & font styling...")
+                        # --- MODIFIED: Save to Session State ---
                         raw_json = json.loads(response.text)
-                        exam_data = UniversalExamPaper(**raw_json)
-                        word_bytes = create_docx(exam_data, exam_language, int(custom_font_size), float(custom_margin))
+                        st.session_state.exam_data = UniversalExamPaper(**raw_json)
+                        st.session_state.raw_json = raw_json
                         
                         status.update(label="🔮 Process Fully Manifested!", state="complete", expanded=False)
-                        
-                        # Generate Download Button
-                        st.download_button(
-                            label="📥 Download Stylized Document",
-                            data=word_bytes,
-                            file_name=f"Digitized_{exam_language}_Exam.docx",
-                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
                         st.balloons()
-                        
-                        # X-Ray Data Preview
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        with st.expander("👀 View X-Ray Live Data"):
-                            st.json(raw_json)
                         
                     except Exception as e:
                         status.update(label="❌ Compile Interrupted", state="error")
                         st.error(f"Diagnostics: {e}")
+
+        # --- MODIFIED: Dynamic Rendering Outside the Button ---
+        # If we have processed data in the session state, render the download section
+        if st.session_state.exam_data:
+            st.markdown("---")
+            st.success("✅ **Document Ready!** You can adjust the Font Size and Margins in the sidebar, and the download will update instantly without needing to re-compile.")
+            
+            # Generate the Word Document using current sidebar slider values
+            word_bytes = create_docx(
+                st.session_state.exam_data, 
+                exam_language, 
+                int(custom_font_size), 
+                float(custom_margin)
+            )
+            
+            # Generate Download Button
+            st.download_button(
+                label="📥 Download Stylized Document",
+                data=word_bytes,
+                file_name=f"Digitized_{exam_language}_Exam.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+            
+            # X-Ray Data Preview
+            st.markdown("<br>", unsafe_allow_html=True)
+            with st.expander("👀 View X-Ray Live Data"):
+                st.json(st.session_state.raw_json)

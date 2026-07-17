@@ -15,64 +15,125 @@ import io
 
 # --- Page Setup (MUST BE FIRST) ---
 st.set_page_config(
-    page_title="AI Exam Digitizer Pro",
-    page_icon="⚡",
-    layout="centered",
+    page_title="Exam Digitizer Ultra",
+    page_icon="🔮",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 🎨 Custom CSS for a Cool UI ---
+# --- 🎨 Ultra-Premium Custom CSS ---
 st.markdown("""
 <style>
-    /* Gradient Main Title */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+
+    /* Global Font & Subtle Tweaks */
+    html, body, [class*="css"] {
+        font-family: 'Outfit', sans-serif !important;
+    }
+    
+    /* Animated Gradient Main Title */
     .main-title {
-        font-size: 3rem;
+        font-size: 4rem;
         font-weight: 900;
-        background: -webkit-linear-gradient(45deg, #00C9FF, #92FE9D);
+        text-align: center;
+        background: linear-gradient(to right, #00F260, #0575E6, #00F260);
+        background-size: 200% auto;
+        color: #fff;
+        background-clip: text;
+        text-fill-color: transparent;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 0px;
-        padding-bottom: 0px;
+        animation: shine 3s linear infinite;
+        margin-bottom: -10px;
+        padding-top: 20px;
+    }
+    
+    @keyframes shine {
+        to { background-position: 200% center; }
     }
     
     /* Subtitle */
     .sub-title {
         text-align: center;
-        color: #A0AEC0;
-        font-size: 1.1rem;
+        color: #8892b0;
+        font-size: 1.2rem;
         font-weight: 400;
-        margin-top: 5px;
-        margin-bottom: 30px;
+        margin-bottom: 40px;
     }
 
-    /* Beautiful Primary Button */
+    /* Glassmorphism for Sidebar */
+    [data-testid="stSidebar"] {
+        background: rgba(15, 23, 42, 0.05) !important;
+        backdrop-filter: blur(15px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Sexy Interactive File Uploader */
+    [data-testid="stFileUploadDropzone"] {
+        border: 2px dashed #0575E6 !important;
+        background-color: rgba(5, 117, 230, 0.03) !important;
+        border-radius: 20px !important;
+        padding: 30px !important;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    [data-testid="stFileUploadDropzone"]:hover {
+        background-color: rgba(5, 117, 230, 0.08) !important;
+        border-color: #00F260 !important;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(5, 117, 230, 0.2);
+    }
+
+    /* Primary Generate Button (Pulse & Glow) */
     .stButton>button {
         width: 100%;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+        background-image: linear-gradient(to right, #4776E6 0%, #8E54E9 51%, #4776E6 100%);
+        margin: 10px 0px;
+        padding: 15px 20px;
+        text-align: center;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
         color: white !important;
-        font-weight: bold;
-        font-size: 1.1rem;
-        padding: 12px 24px;
+        border-radius: 12px;
         border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        font-weight: 900;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(142, 84, 233, 0.4);
     }
     .stButton>button:hover {
+        background-position: right center;
+        box-shadow: 0 8px 25px rgba(142, 84, 233, 0.6);
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
     
-    /* Custom Download Button */
+    /* Download Button (Neon Green Success) */
     .stDownloadButton>button {
         width: 100%;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background-image: linear-gradient(to right, #11998e 0%, #38ef7d 51%, #11998e 100%);
+        margin: 10px 0px;
+        padding: 15px 20px;
+        text-align: center;
+        text-transform: uppercase;
+        transition: 0.5s;
+        background-size: 200% auto;
         color: white !important;
-        font-weight: bold;
+        border-radius: 12px;
         border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        font-weight: 900;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(56, 239, 125, 0.4);
+    }
+    .stDownloadButton>button:hover {
+        background-position: right center;
+        box-shadow: 0 8px 25px rgba(56, 239, 125, 0.6);
+        transform: translateY(-2px);
+    }
+    
+    /* Info/Success/Warning Cards Styling */
+    .stAlert {
+        border-radius: 15px !important;
+        border: none !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -293,62 +354,61 @@ def create_docx(data: UniversalExamPaper, language: str):
 
 # --- 3. Web UI Body ---
 
-st.markdown('<p class="main-title">AI Exam Digitizer Pro</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Instantly convert handwritten or printed exam papers into perfectly formatted Word Documents.</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">AI Vision Matrix</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Instantly materialize printed exams into beautifully structured Word files.</p>', unsafe_allow_html=True)
+st.write("") # Spacer
 
 # Sidebar Settings
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2942/2942821.png", width=80)
-    st.title("⚙️ Settings")
+    st.markdown("<h2 style='text-align: center; color: #00F260;'>🔮 Setup</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
-    api_key = st.text_input("🔑 Gemini API Key", type="password", help="Paste your Google AI Studio key here.")
+    api_key = st.text_input("🔑 Gemini Pro API Key", type="password", help="Paste your Google AI Studio key here.")
     if not api_key:
-        st.warning("⚠️ API Key is required to run the AI.")
+        st.warning("⚠️ API Key is required to run the AI engine.")
         
     exam_language = st.selectbox(
-        "🌐 Document Language",
+        "🌐 Target Language",
         ["Bengali", "English", "Hindi"],
         index=0,
         help="Select the language written in the images."
     )
     
     st.markdown("---")
-    st.markdown("### 💡 Pro-Tips")
-    st.info("1️⃣ File names should be sorted chronologically (e.g., `page1.jpg`, `page2.jpg`) before uploading.\n\n2️⃣ Ensure the images are well-lit for the best AI accuracy.")
+    st.info("📌 **Pro-Tips**\n\n1️⃣ File names should be sorted chronologically (e.g., `page1.jpg`, `page2.jpg`).\n\n2️⃣ Ensure images are well-lit with clear text.")
 
-# Main Interactive Area
-col1, col2 = st.columns([1, 1])
+# Main Interactive Area (Using wider columns for the new layout)
+col1, col_space, col2 = st.columns([1.2, 0.1, 1])
 
 with col1:
-    st.markdown("### 📸 Upload Question Papers")
+    st.markdown("<h3 style='color: #4776E6;'>📸 1. Feed the Matrix</h3>", unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
-        f"Drag and drop {exam_language} images here", 
+        f"Drop {exam_language} image files here", 
         type=["jpg", "jpeg", "png"], 
         accept_multiple_files=True,
         label_visibility="collapsed"
     )
 
 with col2:
-    st.markdown("### 🚀 Magic Generator")
+    st.markdown("<h3 style='color: #8E54E9;'>⚡ 2. Initialize Core</h3>", unsafe_allow_html=True)
     if not uploaded_files:
-        st.info("👈 Upload your images on the left to begin the conversion process.")
+        st.info("👈 Waiting for visual data input on the left...")
     else:
-        st.success(f"📂 {len(uploaded_files)} Pages Ready to Process!")
+        st.success(f"📦 {len(uploaded_files)} Data Blocks Ready")
         
-        if st.button("✨ Generate Word Document"):
+        if st.button("✨ Digitize Now"):
             if not api_key:
-                st.error("Please enter your Gemini API Key in the sidebar first!")
+                st.error("Access Denied: Missing API Key in sidebar.")
             else:
-                with st.status(f"🧠 Parsing {len(uploaded_files)} pages using Gemini 3.5 Flash...", expanded=True) as status:
+                with st.status(f"🧠 Linking with Gemini AI for {exam_language} parsing...", expanded=True) as status:
                     try:
-                        st.write("1️⃣ Sorting files logically...")
+                        st.write("🔄 Aligning files chronologically...")
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         
-                        st.write("2️⃣ Converting images for AI vision...")
+                        st.write("👁️ Opening AI Vision protocols...")
                         img_list = [Image.open(f) for f in sorted_files]
                         
-                        st.write(f"3️⃣ Analyzing layouts & {exam_language} typography (this takes a few seconds)...")
+                        st.write("⚡ Executing Layout Extraction Algorithms (takes ~10 seconds)...")
                         client = genai.Client(api_key=api_key)
                         
                         system_instruction = (
@@ -373,16 +433,16 @@ with col2:
                             )
                         )
                         
-                        st.write("4️⃣ Building Microsoft Word `.docx` file...")
+                        st.write("📝 Synthesizing Microsoft Word Document...")
                         raw_json = json.loads(response.text)
                         exam_data = UniversalExamPaper(**raw_json)
                         word_bytes = create_docx(exam_data, exam_language)
                         
-                        status.update(label="🎉 Conversion Complete!", state="complete", expanded=False)
+                        status.update(label="✅ Operations Complete!", state="complete", expanded=False)
                         
                         # Generate Download
                         st.download_button(
-                            label="📥 Download Formatted Document",
+                            label="📥 Download Structured Document",
                             data=word_bytes,
                             file_name=f"Digitized_{exam_language}_Exam.docx",
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -390,5 +450,5 @@ with col2:
                         st.balloons()
                         
                     except Exception as e:
-                        status.update(label="❌ An error occurred", state="error")
-                        st.error(f"Error details: {e}")
+                        status.update(label="❌ Error in Processing", state="error")
+                        st.error(f"Diagnostics: {e}")

@@ -261,7 +261,6 @@ with st.sidebar:
     if not api_key:
         st.warning("⚠️ Access Key required.")
         
-    # Reverted exactly to previous state (no default index forced)
     exam_language = st.selectbox("🌐 Target Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
@@ -350,10 +349,15 @@ with col2:
                         
                         status.update(label="🔮 Primary Exam Compiled Successfully!", state="complete", expanded=False)
                         
+                        # --- NEW: Dynamic File Naming Logic ---
+                        # Get the name of the first file in the sorted list and remove its extension
+                        first_file_name = sorted_files[0].name.rsplit('.', 1)[0]
+                        output_filename = f"{first_file_name}.docx"
+                        
                         st.download_button(
-                            label="📥 Download Ready-to-Print DOCX",
+                            label=f"📥 Download {output_filename}",
                             data=word_bytes,
-                            file_name=f"Digitized_{exam_language}_Exam.docx",
+                            file_name=output_filename,
                             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         )
                         st.balloons()

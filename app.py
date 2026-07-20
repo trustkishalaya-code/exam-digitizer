@@ -4,54 +4,53 @@ from google.genai import types
 import json
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from PIL import Image
+from PIL import Image, ImageEnhance
 import docx
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
+from docx.shared import Pt, Inches, Mm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import io
 
-# --- Page Setup ---
+# --- Page Setup (MUST BE FIRST) ---
 st.set_page_config(
-    page_title="Question Paper Studio",
+    page_title="AI Exam Digitizer Pro",
+    page_icon="🔮",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- Session State Initialization ---
-if "exam_data" not in st.session_state:
-    st.session_state.exam_data = None
-if "raw_json" not in st.session_state:
-    st.session_state.raw_json = None
-
-# --- Minimalist iOS / One UI Custom CSS ---
+# --- 🎨 Premium Custom Typography & UI Layout ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap');
 
+    /* Global Typography Customizations */
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
     }
     
-    /* Massive High-Impact Gradient Title */
+    h1, h2, h3, .main-title, .section-header {
+        font-family: 'Space Grotesk', sans-serif !important;
+    }
+    
+    /* Cosmic Neon Gradient Title Layout */
     .main-title {
-        font-size: clamp(3.5rem, 8vw, 6.5rem); 
+        font-size: 3.8rem;
         font-weight: 900;
         text-align: center;
-        background: linear-gradient(135deg, #007AFF 0%, #FF2D55 50%, #5856D6 100%);
+        background: linear-gradient(135deg, #FF007A 0%, #7928CA 50%, #00DFD8 100%);
         background-size: 200% auto;
         color: #fff;
         background-clip: text;
         text-fill-color: transparent;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: gradientFlow 5s ease infinite;
-        margin-bottom: 5px;
-        padding-top: 20px;
-        letter-spacing: -2px;
-        line-height: 1.1;
+        animation: gradientFlow 4s ease infinite;
+        margin-bottom: -5px;
+        padding-top: 15px;
+        letter-spacing: -1px;
     }
     
     @keyframes gradientFlow {
@@ -60,64 +59,85 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
     
-    /* Short, Stylized Explainer */
-    .hero-explainer {
+    .sub-title {
         text-align: center;
-        font-size: 1.05rem; 
+        color: #94A3B8;
+        font-size: 1.15rem;
         font-weight: 400;
-        color: var(--text-color); 
-        opacity: 0.75; 
-        max-width: 650px;
-        margin: 15px auto 40px auto;
-        line-height: 1.5;
-        letter-spacing: -0.2px;
-    }
-    
-    .hero-explainer strong {
-        font-weight: 600;
-        color: var(--text-color); 
-        opacity: 1; 
+        margin-bottom: 35px;
+        letter-spacing: 0.2px;
     }
 
-    .section-header {
-        font-weight: 600;
-        font-size: 1.25rem;
-        margin-bottom: 15px;
-        letter-spacing: -0.3px;
+    /* Translucent Glass Sidebar */
+    [data-testid="stSidebar"] {
+        background: rgba(15, 23, 42, 0.4) !important;
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    /* Interactive Upload Dropzone Wrapper */
     [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #D1D1D6 !important;
-        background-color: transparent !important;
-        border-radius: 14px !important;
+        border: 2px dashed #7928CA !important;
+        background-color: rgba(121, 40, 202, 0.03) !important;
+        border-radius: 16px !important;
         padding: 40px 20px !important;
-        transition: border-color 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        border-color: #007AFF !important;
+        background-color: rgba(0, 223, 216, 0.04) !important;
+        border-color: #00DFD8 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 223, 216, 0.15);
     }
 
-    .stButton>button, .stDownloadButton>button {
+    /* Core Compile Button Accent styling */
+    .stButton>button {
         width: 100%;
-        background-color: #007AFF !important; 
+        background-image: linear-gradient(135deg, #7928CA 0%, #FF007A 100%);
+        padding: 14px 20px;
+        text-align: center;
+        transition: 0.4s;
+        background-size: 150% auto;
         color: white !important;
-        border-radius: 12px !important;
-        border: none !important;
-        padding: 12px 20px !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        transition: all 0.2s ease;
-        box-shadow: none !important;
+        border-radius: 12px;
+        border: none;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(121, 40, 202, 0.3);
     }
-    .stButton>button:hover, .stDownloadButton>button:hover {
-        background-color: #0056b3 !important;
-        transform: scale(0.98);
+    .stButton>button:hover {
+        background-position: right center;
+        box-shadow: 0 8px 25px rgba(255, 0, 122, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    /* High Contrast Success Download Action */
+    .stDownloadButton>button {
+        width: 100%;
+        background-image: linear-gradient(135deg, #00DFD8 0%, #00F260 100%);
+        padding: 14px 20px;
+        text-align: center;
+        transition: 0.4s;
+        background-size: 150% auto;
+        color: #0F172A !important;
+        border-radius: 12px;
+        border: none;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0, 223, 216, 0.3);
+    }
+    .stDownloadButton>button:hover {
+        background-position: right center;
+        box-shadow: 0 8px 25px rgba(0, 242, 96, 0.5);
+        transform: translateY(-2px);
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# --- 1. Universal Layout Schema ---
+# --- 1. Universal Structural Schemas ---
 class LayoutBlock(BaseModel):
     block_type: str = Field(description="Can be: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', 'drawing_box_block'")
     text_content: Optional[str] = Field(default=None)
@@ -126,8 +146,7 @@ class LayoutBlock(BaseModel):
     table_cols: Optional[int] = Field(default=None)
     table_data: Optional[List[List[str]]] = Field(default=None)
     columns_data: Optional[List[List[str]]] = Field(default=None)
-    box_height_inches: Optional[float] = Field(default=2.0)
-    diagram_description: Optional[str] = Field(default=None, description="If this is a drawing box, describe what the original image showed so the user knows what to paste.")
+    box_height_inches: Optional[float] = Field(default=1.5)
 
 class UniversalExamPaper(BaseModel):
     school_name: str
@@ -136,19 +155,11 @@ class UniversalExamPaper(BaseModel):
     subject: str
     full_marks: str
     time: str
-    student_info_line: str
-    blocks: List[LayoutBlock] = Field(description="Chronological order of layout blocks")
+    student_info_line: str = Field(description="Student details line placeholder")
+    blocks: List[LayoutBlock] = Field(description="Chronological sequence of structured objects found")
 
 
-# --- 2. Helper Functions ---
-# --- MODIFIED: Increased resolution to 2500 for better OCR accuracy ---
-def optimize_image(img, max_width=2500):
-    if img.width > max_width:
-        ratio = max_width / img.width
-        new_size = (max_width, int(img.height * ratio))
-        img = img.resize(new_size, Image.Resampling.LANCZOS)
-    return img.convert('RGB')
-
+# --- 2. Word Engine with Native A4 / Narrow Layout Adjustments ---
 def set_table_borders(table, color="cccccc"):
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement('w:tblBorders')
@@ -158,14 +169,17 @@ def set_table_borders(table, color="cccccc"):
         tblBorders.append(border)
     tblPr.append(tblBorders)
 
-def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_size: float):
+def create_docx(data: UniversalExamPaper, language: str, font_size: int):
     doc = Document()
     
+    # 📏 Strict Standard Layout: A4 Sheet Dimensions + Narrow (0.5 inch) Margins
     for section in doc.sections:
-        section.top_margin = Inches(margin_size)
-        section.bottom_margin = Inches(margin_size)
-        section.left_margin = Inches(margin_size)
-        section.right_margin = Inches(margin_size)
+        section.page_width = Mm(210)
+        section.page_height = Mm(297)
+        section.top_margin = Inches(0.5)
+        section.bottom_margin = Inches(0.5)
+        section.left_margin = Inches(0.5)
+        section.right_margin = Inches(0.5)
         
     font_mapping = {"Bengali": "Kalpurush", "Hindi": "Mangal", "English": "Calibri"}
     selected_font = font_mapping.get(language, "Calibri")
@@ -174,6 +188,7 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     style.font.name = selected_font
     style.font.size = Pt(font_size)
     
+    # Header Parsing Engine
     p_school = doc.add_paragraph()
     p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_school = p_school.add_run(data.school_name)
@@ -188,19 +203,22 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     run_title.font.size = Pt(font_size + 1)
     p_title.paragraph_format.space_after = Pt(8)
     
+    # Metadata Setup Table
     class_label = "Class" if language == "English" else ("শ্রেণী" if language == "Bengali" else "कक्षा")
     marks_label = "Full Marks" if language == "English" else ("পূর্ণমান" if language == "Bengali" else "पूर्णांक")
-    subject_label = "Subject" if language == "English" else ("বিষয়" if language == "Bengali" else "विषय")
+    subject_label = "Subject" if language == "English" else ("विषय" if language == "Bengali" else "विषय")
     time_label = "Time" if language == "English" else ("সময়" if language == "Bengali" else "समय")
 
     def format_meta(label, val):
         if not val: return ""
-        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "সময়" in val or "पूर्णांक" in val:
+        if label.lower() in val.lower() or "শ্রেণী" in val or "कक्षा" in val or "পূর্ণমান" in val or "विषय" in val or "সময়" in val or "पूर्णांक" in val:
             return val
         return f"{label} — {val}"
 
     meta_table = doc.add_table(rows=2, cols=2)
-    meta_table.autofit = True
+    meta_table.autofit = False
+    meta_table.columns[0].width = Inches(3.75)
+    meta_table.columns[1].width = Inches(3.75)
     
     meta_table.rows[0].cells[0].paragraphs[0].text = format_meta(class_label, data.class_name)
     meta_table.rows[0].cells[1].paragraphs[0].text = format_meta(marks_label, data.full_marks)
@@ -226,9 +244,10 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
     
     p_div = doc.add_paragraph()
     p_div.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_div.add_run("—" * 60)
+    p_div.add_run("—" * 74)
     p_div.paragraph_format.space_after = Pt(12)
     
+    # Process Chronological Layout Blocks
     for b in data.blocks:
         if b.block_type == 'text_paragraph' and b.text_content:
             p = doc.add_paragraph()
@@ -252,7 +271,6 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
                 doc.add_paragraph().add_run(b.text_content).bold = True
             if b.table_rows and b.table_cols:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
-                tbl.autofit = True
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
                 set_table_borders(tbl, "cccccc")
                 if b.table_data:
@@ -270,8 +288,9 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
                 num_cols = len(b.columns_data)
                 max_rows = max(len(col) for col in b.columns_data)
                 col_tbl = doc.add_table(rows=max_rows, cols=num_cols)
-                col_tbl.autofit = True
+                col_width = Inches(7.5 / num_cols)
                 for c in range(num_cols):
+                    col_tbl.columns[c].width = col_width
                     col_items = b.columns_data[c]
                     for r in range(max_rows):
                         if r < len(col_items):
@@ -283,199 +302,128 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int, margin_
                 doc.add_paragraph().add_run(b.text_content).bold = True
             box_tbl = doc.add_table(rows=1, cols=1)
             box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
-            box_tbl.rows[0].height = Inches(b.box_height_inches or 2.0)
+            box_tbl.rows[0].height = Inches(b.box_height_inches or 1.5)
             set_table_borders(box_tbl, "888888")
-            
-            if b.diagram_description:
-                cell_p = box_tbl.rows[0].cells[0].paragraphs[0]
-                cell_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run = cell_p.add_run(f"[Insert Diagram Here: {b.diagram_description}]")
-                run.font.color.rgb = RGBColor(150, 150, 150)
-                
             doc.add_paragraph()
 
     bio = io.BytesIO()
     doc.save(bio)
     return bio.getvalue()
 
-# --- 3. Web UI Body ---
-st.markdown('<p class="main-title">Question Paper Studio</p>', unsafe_allow_html=True)
+# --- 3. Interactive Front-End Layout ---
+st.markdown('<p class="main-title">AI Vision Matrix</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Sleek, A4-Standard precision digitizer optimized for primary and secondary school exams.</p>', unsafe_allow_html=True)
+st.write("")
 
-# Clean SVG Explainer Graphic
-st.markdown("""
-<div style="display: flex; justify-content: center; align-items: center; padding: 10px 0 10px 0; gap: 25px; opacity: 0.8;">
-   <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-      <circle cx="8.5" cy="8.5" r="1.5"></circle>
-      <polyline points="21 15 16 10 5 21"></polyline>
-   </svg>
-   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-      <polyline points="12 5 19 12 12 19"></polyline>
-   </svg>
-   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path>
-      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"></path>
-   </svg>
-   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-      <polyline points="12 5 19 12 12 19"></polyline>
-   </svg>
-   <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14 2 14 8 20 8"></polyline>
-      <line x1="16" y1="13" x2="8" y2="13"></line>
-      <line x1="16" y1="17" x2="8" y2="17"></line>
-      <polyline points="10 9 9 9 8 9"></polyline>
-   </svg>
-</div>
-""", unsafe_allow_html=True)
-
-# Short, Stylized Explainer
-st.markdown("""
-<div class="hero-explainer">
-    Transform messy handwritten and printed exams into <strong>perfectly structured, completely editable Word documents</strong> in seconds. Smart layout, multi-language support, zero formatting headaches.
-</div>
-""", unsafe_allow_html=True)
-
-
-# Sidebar Settings
+# Configuration Engine Sidebar
 with st.sidebar:
-    st.markdown('<p class="section-header">System Settings</p>', unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #00DFD8; font-family: Space Grotesk;'>🔮 System Engine</h2>", unsafe_allow_html=True)
+    st.markdown("---")
     
-    api_key = st.text_input("Gemini Pro API Key", type="password")
+    api_key = st.text_input("🔑 Gemini Pro API Key", type="password")
     if not api_key:
-        st.warning("API key required to process documents.")
+        st.warning("⚠️ Access Key required to authorize deployment.")
         
-    exam_language = st.selectbox("Target Language", ["Bengali", "English", "Hindi"])
-    
-    ai_engine = st.radio("Processing Engine", ["Speed (Gemini Flash)", "High Accuracy (Gemini Pro)"])
+    exam_language = st.selectbox("🌐 Target Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
-    st.markdown('<p class="section-header">Document Styling</p>', unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #FF007A; font-family: Space Grotesk;'>🎛️ Document Styling</h3>", unsafe_allow_html=True)
+    custom_font_size = st.number_input("Font Size (Pt)", min_value=8, max_value=18, value=11)
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        custom_font_size = st.number_input("Font Size (Pt)", min_value=8, max_value=18, value=11)
-    with col_b:
-        custom_margin = st.number_input("Margins (In)", min_value=0.5, max_value=2.0, value=0.75, step=0.1)
-
     st.markdown("---")
-    st.info("Tip: Adjust font and margins anytime after compiling. The document will update instantly.")
+    st.caption("⚙️ **Forced Layout Profiles Enabled:** Page Formats are strictly configured to **A4 Profile** utilizing modern **Narrow Borders (0.5 in)**.")
 
-# Main Interactive Workspace
+# Main Operational Viewport
 col1, col_space, col2 = st.columns([1.2, 0.1, 1])
 
 with col1:
-    st.markdown('<p class="section-header">1. Upload Files</p>', unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #7928CA;'>📸 1. Input Processing Stream</h3>", unsafe_allow_html=True)
     uploaded_files = st.file_uploader(
-        f"Drop {exam_language} image files here", 
+        f"Drop {exam_language} image segments here", 
         type=["jpg", "jpeg", "png"], 
         accept_multiple_files=True,
         label_visibility="collapsed"
     )
-    
-    if uploaded_files and st.session_state.exam_data and len(uploaded_files) != getattr(st.session_state, 'last_upload_count', 0):
-        st.session_state.exam_data = None
-        st.session_state.raw_json = None
-    st.session_state.last_upload_count = len(uploaded_files)
 
 with col2:
-    st.markdown('<p class="section-header">2. Process Images</p>', unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #FF007A;'>⚡ 2. Transformation Vector</h3>", unsafe_allow_html=True)
     if not uploaded_files:
-        st.info("Please drop your image files in the dropzone to continue.")
+        st.info("👈 System idle. Feed raw paper matrices to initialize parsing sequence.")
     else:
-        st.success(f"{len(uploaded_files)} Pages Ready for Processing")
+        st.success(f"📂 {len(uploaded_files)} Page Channels Registered & Online")
         
-        if st.button("Compile Document"):
+        if st.button("✨ Compile Document Matrix"):
             if not api_key:
-                st.error("Please provide your Gemini API Key in the sidebar.")
+                st.error("Operation Aborted: Missing API credential matrix in configuration.")
             else:
-                with st.status(f"Parsing structure with AI...", expanded=True) as status:
+                with st.status(f"🧠 Initiating Vision Intelligence OCR...", expanded=True) as status:
                     try:
+                        # 🧬 Step A: Chronological Array Sorting & High-Contrast Visual Preprocessing
+                        st.write("🌌 Enhancing image channel contrast values by 1.5x...")
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
+                        img_list = []
                         
-                        st.write("Optimizing images for processing...")
-                        img_list = [optimize_image(Image.open(f)) for f in sorted_files]
+                        for f in sorted_files:
+                            raw_img = Image.open(f)
+                            # Boost contrast aggressively to sharpen low-quality hand drawings or faded text
+                            enhancer = ImageEnhance.Contrast(raw_img)
+                            enhanced_img = enhancer.enhance(1.5)
+                            img_list.append(enhanced_img)
                         
                         client = genai.Client(api_key=api_key)
                         
-                        # --- MODIFIED: Strict prompt to prevent AI guessing/autocorrecting ---
+                        # 🎯 Step B: Upgraded Precision + Emoji-mapping Directives
                         system_instruction = (
-                            f"You are a strict, highly precise document OCR parser specialized in {exam_language} exam papers. "
-                            f"RULES: "
-                            f"1. TRANSCRIBE EXACTLY. Extract text character-for-character. DO NOT autocorrect spelling or grammar. If a word is misspelled in the image, keep it misspelled. "
-                            f"2. Handle messy handwriting accurately. If a specific word is completely illegible, write '[ILLEGIBLE]' instead of guessing. "
-                            f"3. For images, diagrams, or graphs, use 'drawing_box_block'. You MUST write a brief description of what the image shows in the 'diagram_description' field. "
-                            f"4. Map visual formats strictly to the 'blocks' array: 'text_paragraph', 'list_block', 'grid_table_block', 'column_layout_block', or 'drawing_box_block'."
+                            f"You are a master-level, highly accurate document OCR parser specialized in parsing {exam_language} exam papers for young elementary students. "
+                            f"Your primary directive is 100% literal text accuracy. DO NOT summarize, paraphrase, or leave out words. Transcribe exactly as written, "
+                            f"preserving all original punctuation, sentence styling, numbering, and mathematical operators.\n\n"
+                            f"🖼️ ELEMENTARY ILLUSTRATION TRANSLATION RULE: These exam papers are for lower classes and contain basic drawings. "
+                            f"If you see basic vector-style drawings or illustrations representing common objects (e.g., a sun, tree, ball, star, apple, cat, mango, flower), "
+                            f"DO NOT replace them with an empty drawing box block. Instead, instantly translate that illustration into its closest matching Emoji or Unicode character matrix "
+                            f"(e.g., ☀️, 🌳, ⚽, ⭐, 🍎, 🐈, 🥭, 🌸). Insert these emojis directly within the 'text_content' or 'list_items' exactly where the image appears on the physical paper."
                         )
                         
-                        prompt = f"Analyze all pages in order. Extract layout structure and text completely faithfully in {exam_language}."
+                        prompt = (
+                            f"Analyze all processed pages sequentially. Extract structural layout blocks and all text contents with extreme fidelity in {exam_language}. "
+                            f"Pay absolute attention to word spelling, text sequences, and object counts (e.g., if a question has a drawing of 3 stars next to it, output '⭐ ⭐ ⭐')."
+                        )
+                        
                         contents = [prompt] + img_list
                         
-                        st.write("Running high-fidelity OCR scanning...")
+                        st.write("🧠 Executing deep layout parsing matrix...")
+                        response = client.models.generate_content(
+                            model='gemini-3.5-flash',
+                            contents=contents,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_instruction,
+                                response_mime_type="application/json",
+                                response_schema=UniversalExamPaper,
+                                temperature=0.1
+                            )
+                        )
                         
-                        if "Pro" in ai_engine:
-                            fallback_models = ['gemini-3.5-pro', 'gemini-3.1-pro-preview']
-                        else:
-                            fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite']
-                            
-                        response = None
-                        last_error = None
-
-                        for model_name in fallback_models:
-                            try:
-                                response = client.models.generate_content(
-                                    model=model_name,
-                                    contents=contents,
-                                    config=types.GenerateContentConfig(
-                                        system_instruction=system_instruction,
-                                        response_mime_type="application/json",
-                                        response_schema=UniversalExamPaper,
-                                        temperature=0.1
-                                    )
-                                )
-                                break
-                            except Exception as e:
-                                error_msg = str(e)
-                                if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg or "404" in error_msg or "NOT_FOUND" in error_msg:
-                                    st.warning(f"Model {model_name} unavailable or busy. Rerouting...")
-                                    last_error = error_msg
-                                    continue
-                                else:
-                                    raise e
-                                    
-                        if not response:
-                            raise Exception(f"All backup servers are currently busy or unavailable. Please try again in a few minutes. (Last Error: {last_error})")
-                        
+                        # 📝 Step C: Map Schema Directly into A4 Styled Word Document
+                        st.write("📝 Structuralizing output stream into Microsoft Word container...")
                         raw_json = json.loads(response.text)
-                        st.session_state.exam_data = UniversalExamPaper(**raw_json)
-                        st.session_state.raw_json = raw_json
+                        exam_data = UniversalExamPaper(**raw_json)
+                        word_bytes = create_docx(exam_data, exam_language, int(custom_font_size))
                         
-                        status.update(label="Process Complete", state="complete", expanded=False)
+                        status.update(label="🔮 Execution Completed Successfully!", state="complete", expanded=False)
+                        
+                        # Stream Dynamic Download Action
+                        st.download_button(
+                            label="📥 Download A4 Digitized Document",
+                            data=word_bytes,
+                            file_name=f"Digitized_{exam_language}_Exam.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+                        st.balloons()
+                        
+                        # 🔬 Step D: Real-time X-Ray Data Inspector Panel
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        with st.expander("👀 View Visual X-Ray Data Preview"):
+                            st.json(raw_json)
                         
                     except Exception as e:
-                        status.update(label="Compile Interrupted", state="error")
-                        st.error(f"Diagnostics: {e}")
-
-        if st.session_state.exam_data:
-            st.markdown("---")
-            st.success("Document Ready. Adjust Font Size and Margins in the sidebar; the download will update automatically.")
-            
-            word_bytes = create_docx(
-                st.session_state.exam_data, 
-                exam_language, 
-                int(custom_font_size), 
-                float(custom_margin)
-            )
-            
-            st.download_button(
-                label="Download Stylized Document",
-                data=word_bytes,
-                file_name=f"Digitized_{exam_language}_Exam.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            with st.expander("View Live JSON Data"):
-                st.json(st.session_state.raw_json)
+                        status.update(label="❌ Matrix Processing Failure", state="error")
+                        st.error(f"Error Report: {e}")

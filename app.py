@@ -308,7 +308,6 @@ with left_col:
                         img_list = []
                         for f in sorted_files:
                             raw_img = Image.open(f)
-                            # OpenCV / PIL Enhancement preprocessing
                             enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.6)).enhance(2.0)
                             img_list.append(enhanced)
                         
@@ -326,7 +325,7 @@ with left_col:
                         
                         st.write("🤖 Communicating with Gemini Neural Matrix...")
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3.5-flash',
                             contents=contents,
                             config=types.GenerateContentConfig(
                                 system_instruction=system_instruction,

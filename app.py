@@ -15,68 +15,99 @@ import io
 
 # --- Page Setup ---
 st.set_page_config(
-    page_title="AI Exam Digitizer Pro Max",
-    page_icon="⚡",
+    page_title="Academic Bento Exam Studio",
+    page_icon="📖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 🎨 Elite Cyber-Glassmorphic UI Design System ---
+# --- 🎨 Academic Bento & Editorial Minimalist UI Design System ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-    html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; background-color: #07090E !important; color: #F1F5F9 !important; }
+    html, body, [class*="css"] { 
+        font-family: 'Plus Jakarta Sans', sans-serif !important; 
+        background-color: #F8F9FA !important; 
+        color: #1A1D20 !important; 
+    }
+    
+    h1, h2, h3, .serif-title {
+        font-family: 'Instrument Serif', serif !important;
+    }
     
     .main-title {
-        font-size: 3.2rem; font-weight: 800; text-align: center;
-        background: linear-gradient(135deg, #FF2E93 0%, #7928CA 50%, #00DFD8 100%);
-        background-size: 200% auto; color: #fff;
-        background-clip: text; text-fill-color: transparent;
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        animation: gradientFlow 5s ease infinite; margin-bottom: 0px; letter-spacing: -1.5px;
+        font-size: 3.5rem; font-weight: 400; text-align: left;
+        color: #111315; letter-spacing: -0.5px; line-height: 1.1;
+        margin-bottom: 0px;
     }
     
-    @keyframes gradientFlow {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    .sub-title { 
+        text-align: left; color: #606873; font-size: 1.05rem; 
+        font-weight: 500; margin-bottom: 25px; 
     }
-    
-    .sub-title { text-align: center; color: #64748B; font-size: 1.05rem; font-weight: 500; margin-bottom: 30px; letter-spacing: 0.3px; }
 
-    [data-testid="stSidebar"] { background: rgba(11, 15, 25, 0.75) !important; backdrop-filter: blur(24px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+    [data-testid="stSidebar"] { 
+        background: #F1F3F5 !important; 
+        border-right: 1px solid #E2E8F0 !important; 
+    }
 
-    .glass-card {
-        background: rgba(18, 24, 38, 0.6); backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 20px;
-        padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); margin-bottom: 20px;
+    /* Bento Grid Cards */
+    .bento-card {
+        background: #FFFFFF;
+        border: 2px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+        margin-bottom: 20px;
     }
 
     [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed rgba(121, 40, 202, 0.4) !important; background-color: rgba(121, 40, 202, 0.02) !important;
-        border-radius: 16px !important; padding: 30px 20px !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px dashed #CBD5E1 !important; 
+        background-color: #FAFAFA !important;
+        border-radius: 12px !important; 
+        padding: 30px 20px !important; 
+        transition: all 0.2s ease;
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        background-color: rgba(0, 223, 216, 0.04) !important; border-color: #00DFD8 !important;
-        transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 223, 216, 0.12);
+        background-color: #F1F5F9 !important; 
+        border-color: #0F172A !important;
     }
 
     .stButton>button {
-        width: 100%; background-image: linear-gradient(135deg, #7928CA 0%, #FF2E93 100%);
-        padding: 14px 20px; text-align: center; transition: 0.4s; background-size: 150% auto;
-        color: white !important; border-radius: 14px; border: none; font-weight: 700;
-        letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(121, 40, 202, 0.35);
+        width: 100%; 
+        background-color: #0F172A;
+        padding: 12px 20px; 
+        text-align: center; 
+        color: #FFFFFF !important; 
+        border-radius: 10px; 
+        border: none; 
+        font-weight: 600;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        transition: transform 0.1s ease, background-color 0.2s ease;
     }
-    .stButton>button:hover { background-position: right center; box-shadow: 0 8px 25px rgba(255, 46, 147, 0.5); transform: translateY(-2px); }
+    .stButton>button:hover { 
+        background-color: #334155; 
+        transform: translateY(-1px); 
+    }
     
     .stDownloadButton>button {
-        width: 100%; background-image: linear-gradient(135deg, #00DFD8 0%, #00F260 100%);
-        padding: 14px 20px; text-align: center; transition: 0.4s; background-size: 150% auto;
-        color: #07090E !important; border-radius: 14px; border: none; font-weight: 800;
-        letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(0, 223, 216, 0.35);
+        width: 100%; 
+        background-color: #0D9488;
+        padding: 12px 20px; 
+        text-align: center; 
+        color: #FFFFFF !important; 
+        border-radius: 10px; 
+        border: none; 
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+        transition: transform 0.1s ease, background-color 0.2s ease;
     }
-    .stDownloadButton>button:hover { background-position: right center; box-shadow: 0 8px 25px rgba(0, 242, 96, 0.5); transform: translateY(-2px); }
+    .stDownloadButton>button:hover { 
+        background-color: #0F766E; 
+        transform: translateY(-1px); 
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -248,25 +279,25 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int):
     return bio.getvalue()
 
 # --- 3. UI Header & Sidebar Matrix ---
-st.markdown('<p class="main-title">AI Vision Matrix Pro</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Next-Gen Intelligent Primary Exam Digitizer & Studio Suite</p>', unsafe_allow_html=True)
+st.markdown('<p class="main-title">Academic Studio</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Editorial Document Digitizer & Layout Compiler</p>', unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("<h3 style='color: #00DFD8; font-family: Plus Jakarta Sans; font-weight: 700;'>⚙️ Control Matrix</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Studio Controls</h3>", unsafe_allow_html=True)
     st.markdown("---")
     
     api_key = st.text_input("🔑 Gemini API Key", type="password")
     if not api_key:
-        st.warning("⚠️ Access Key required to unlock engines.")
+        st.warning("⚠️ Access Key required.")
         
-    exam_language = st.selectbox("🌐 Target Language", ["Bengali", "English", "Hindi"])
+    exam_language = st.selectbox("🌐 Document Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
-    st.markdown("<h3 style='color: #FF2E93; font-family: Plus Jakarta Sans; font-weight: 700;'>📐 Typography Tuning</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Formatting</h3>", unsafe_allow_html=True)
     custom_font_size = st.number_input("Base Font Size (Pt)", min_value=8, max_value=18, value=12)
     
     st.markdown("---")
-    st.caption("✨ **Active Protocol:** A4 Profile locked with Narrow Margins (0.5 in). Dynamic file renaming enabled.")
+    st.caption("📋 Standard A4 Layout Profile with Narrow Margins (0.5 in).")
 
 # --- Session State Initialization ---
 if "parsed_data" not in st.session_state:
@@ -274,36 +305,35 @@ if "parsed_data" not in st.session_state:
 if "original_filename" not in st.session_state:
     st.session_state.original_filename = "Exam_Output.docx"
 
-# --- Main Workspace Layout ---
-left_col, right_col = st.columns([1, 1], gap="large")
+# --- Main Bento Layout Workspace ---
+col_left, col_right = st.columns([1, 1], gap="medium")
 
-with left_col:
-    st.markdown("### 📥 1. Intake & Source Stream")
+with col_left:
+    st.markdown("### 01 / Intake Stream")
     uploaded_files = st.file_uploader(
-        f"Drop {exam_language} exam scans here", 
+        f"Upload {exam_language} exam sheets", 
         type=["jpg", "jpeg", "png"], 
         accept_multiple_files=True
     )
     
     if uploaded_files:
         st.session_state.original_filename = uploaded_files[0].name.rsplit('.', 1)[0] + ".docx"
-        st.success(f"📂 Registered {len(uploaded_files)} source pages.")
+        st.success(f"Loaded {len(uploaded_files)} source files.")
         
-        # Display Thumbnail Preview Row
+        # Thumbnail Grid Preview
         thumb_cols = st.columns(min(len(uploaded_files), 4))
         for idx, file in enumerate(uploaded_files[:4]):
             with thumb_cols[idx]:
                 img_preview = Image.open(file)
-                st.image(img_preview, caption=f"Page {idx+1}", use_container_width=True)
+                st.image(img_preview, use_container_width=True)
         
         st.write("")
-        if st.button("🚀 Run Deep AI Layout Extraction"):
+        if st.button("Run Extraction Pipeline"):
             if not api_key:
-                st.error("API Key is missing.")
+                st.error("Missing API Key.")
             else:
-                with st.status("🧠 Processing Vision Pipeline...", expanded=True) as status:
+                with st.status("Analyzing document structure...", expanded=True) as status:
                     try:
-                        st.write("🔍 Enhancing contrast & sharpness for handwriting vectors...")
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         img_list = []
                         for f in sorted_files:
@@ -323,7 +353,6 @@ with left_col:
                         prompt = f"Analyze all pages sequentially and extract structured objects in {exam_language}."
                         contents = [prompt] + img_list
                         
-                        st.write("🤖 Communicating with Gemini Neural Matrix...")
                         response = client.models.generate_content(
                             model='gemini-3.5-flash',
                             contents=contents,
@@ -337,23 +366,23 @@ with left_col:
                         
                         raw_json = json.loads(response.text)
                         st.session_state.parsed_data = UniversalExamPaper(**raw_json)
-                        status.update(label="✨ Extraction Complete! Review your exam data on the right.", state="complete", expanded=False)
+                        status.update(label="Extraction complete. Review content on the right.", state="complete", expanded=False)
                         st.rerun()
                         
                     except Exception as e:
-                        status.update(label="❌ Pipeline Execution Failed", state="error")
+                        status.update(label="Extraction failed", state="error")
                         st.error(f"Error: {e}")
 
-with right_col:
-    st.markdown("### 📝 2. Live Proofreader & Studio Compiler")
+with col_right:
+    st.markdown("### 02 / Studio Review & Export")
     
     if st.session_state.parsed_data is None:
-        st.info("👈 Upload documents and run extraction to preview and edit text blocks here before building your final document.")
+        st.info("Upload source files and run extraction to preview and edit text components here.")
     else:
         data = st.session_state.parsed_data
         
         with st.form("exam_editor_form"):
-            st.markdown("#### 📄 Document Header Details")
+            st.markdown("#### Document Metadata")
             data.school_name = st.text_input("School Name", value=data.school_name)
             data.exam_title = st.text_input("Exam Title", value=data.exam_title)
             
@@ -365,11 +394,10 @@ with right_col:
                 data.full_marks = st.text_input("Full Marks", value=data.full_marks)
                 data.time = st.text_input("Time", value=data.time)
                 
-            data.student_info_line = st.text_input("Student Info Placeholder Line", value=data.student_info_line)
+            data.student_info_line = st.text_input("Student Info Placeholder", value=data.student_info_line)
             
             st.markdown("---")
-            st.markdown("#### 🧩 Extracted Content Blocks Preview")
-            st.caption(f"Total Structural Elements Found: {len(data.blocks)}")
+            st.markdown("#### Structural Elements Editor")
             
             for i, block in enumerate(data.blocks):
                 if block.block_type == 'text_paragraph':
@@ -379,17 +407,17 @@ with right_col:
                 elif block.block_type == 'drawing_box_block':
                     block.text_content = st.text_input(f"Block {i+1} (Drawing Box Label)", value=block.text_content or "")
             
-            update_submitted = st.form_submit_button("💾 Save Changes & Compile Final Word File")
+            update_submitted = st.form_submit_button("Update Layout State")
             
             if update_submitted:
-                st.success("Changes saved successfully to compiler state!")
+                st.success("Layout modified successfully.")
         
         st.markdown("---")
-        st.markdown("#### 📥 Ready-to-Print Export")
+        st.markdown("#### Download Output Document")
         word_bytes = create_docx(st.session_state.parsed_data, exam_language, int(custom_font_size))
         
         st.download_button(
-            label=f"📥 Download {st.session_state.original_filename}",
+            label=f"Download {st.session_state.original_filename}",
             data=word_bytes,
             file_name=st.session_state.original_filename,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"

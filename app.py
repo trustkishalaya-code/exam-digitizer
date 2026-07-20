@@ -82,8 +82,8 @@ class LayoutBlock(BaseModel):
     list_items: Optional[List[str]] = Field(default=None)
     table_rows: Optional[int] = Field(default=None)
     table_cols: Optional[int] = Field(default=None)
-    table_data: Optional[List[List[str]]] = Field(default=None)
-    columns_data: Optional[List[List[str]]] = Field(default=None)
+    table_data: Optional[List[List[str]]] = Field(description="Must contain exact 2D grid matrix rows and cell text values when using grid_table_block", default=None)
+    columns_data: Optional[List[List[str]]] = Field(description="Must contain column text lists when using column_layout_block", default=None)
     box_height_inches: Optional[float] = Field(default=1.5)
 
 class UniversalExamPaper(BaseModel):
@@ -206,16 +206,15 @@ def create_docx(data: UniversalExamPaper, language: str, font_size: int):
         elif b.block_type == 'grid_table_block':
             if b.text_content:
                 doc.add_paragraph().add_run(b.text_content).bold = True
-            if b.table_rows and b.table_cols:
+            if b.table_rows and b.table_cols and b.table_data:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
                 set_table_borders(tbl, "cccccc")
-                if b.table_data:
-                    for r_idx, row_items in enumerate(b.table_data):
-                        if r_idx < b.table_rows:
-                            for c_idx, val in enumerate(row_items):
-                                if c_idx < b.table_cols:
-                                    tbl.rows[r_idx].cells[c_idx].paragraphs[0].text = val
+                for r_idx, row_items in enumerate(b.table_data):
+                    if r_idx < b.table_rows:
+                        for c_idx, val in enumerate(row_items):
+                            if c_idx < b.table_cols:
+                                tbl.rows[r_idx].cells[c_idx].paragraphs[0].text = val
                 doc.add_paragraph()
                 
         elif b.block_type == 'column_layout_block':
@@ -312,20 +311,20 @@ with col2:
                         
                         client = genai.Client(api_key=api_key)
                         
-                        # 🎯 Upgraded Prompt exclusively for Nursery-Class 4 (Handles all 3 languages)
+                        # 🎯 Enhanced System Instruction forcing full table grid population
                         system_instruction = (
                             f"You are a master-level OCR parser specialized in digitizing {exam_language} medium primary school exams (Nursery to Class 4). "
                             f"Your primary directive is 100% literal text accuracy. DO NOT summarize or paraphrase.\n\n"
-                            f"🏫 STRICT PRIMARY SCHOOL RULES:\n"
+                            f"🏫 STRICT PRIMARY SCHOOL & TABLE EXTRACTION RULES:\n"
                             f"1. FILL-IN-THE-BLANKS: You MUST strictly preserve all empty dotted lines (......) or underscores (_____) intended for students to write their answers on.\n"
-                            f"2. MATCH THE FOLLOWING: If you see 'Match Column A to Column B' style questions, perfectly capture them using the 'column_layout_block' or 'grid_table_block'.\n"
+                            f"2. FULL TABLE GENERATION: Whenever you see a grid, table, or 'Match Column A with Column B' element, DO NOT just describe it. You MUST fully map it out using 'grid_table_block' or 'column_layout_block'. Populate the actual table_rows, table_cols, and complete 2D array matrix under `table_data` with all text strings inside each cell.\n"
                             f"3. BENGALI SPELLING: If the language is Bengali, pay extreme attention to complex conjuncts (যুক্তাক্ষর). Do not break or alter the spellings of handwritten text.\n"
                             f"4. ILLUSTRATION TRANSLATION: If you see basic vector-style drawings representing common objects for counting or naming (e.g., a sun, tree, ball, star, apple, cat, mango, leaf), "
                             f"instantly translate that illustration into its closest matching Emoji (e.g., ☀️, 🌳, ⚽, ⭐, 🍎, 🐈, 🥭, 🍃). Insert these emojis directly within the text."
                         )
                         
                         prompt = (
-                            f"Analyze all processed pages sequentially. Extract structural layout blocks and all text contents with extreme fidelity in {exam_language}."
+                            f"Analyze all processed pages sequentially. Extract structural layout blocks and all table matrices and text contents with extreme fidelity in {exam_language}."
                         )
                         
                         contents = [prompt] + img_list
@@ -349,8 +348,6 @@ with col2:
                         
                         status.update(label="🔮 Primary Exam Compiled Successfully!", state="complete", expanded=False)
                         
-                        # --- NEW: Dynamic File Naming Logic ---
-                        # Get the name of the first file in the sorted list and remove its extension
                         first_file_name = sorted_files[0].name.rsplit('.', 1)[0]
                         output_filename = f"{first_file_name}.docx"
                         

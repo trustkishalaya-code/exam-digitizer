@@ -13,6 +13,7 @@ from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import io
+import fitz  # PyMuPDF for PDF support
 
 # --- Page Setup ---
 st.set_page_config(
@@ -93,21 +94,26 @@ class UniversalExamPaper(BaseModel):
     blocks: List[LayoutBlock] = Field(description="Chronological sequence of structured objects found")
 
 # --- 2. Advanced Typography & Word Engine ---
+def optimize_image(img, max_width=2500):
+    if img.width > max_width:
+        ratio = max_width / img.width
+        new_size = (max_width, int(img.height * ratio))
+        img = img.resize(new_size, Image.Resampling.LANCZOS)
+    return img.convert('RGB')
+
 def set_table_borders(table, color="000000", sz="8"):
-    """Applies crisp, solid borders to Word tables (default full black #000000)."""
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement('w:tblBorders')
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
         border.set(qn('w:val'), 'single')
-        border.set(qn('w:sz'), sz)  # 8 = 1pt sharp black line
+        border.set(qn('w:sz'), sz)  
         border.set(qn('w:space'), '0')
         border.set(qn('w:color'), color)  
         tblBorders.append(border)
     tblPr.append(tblBorders)
 
 def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
-    """Adds generous internal padding to table cells for primary kindergarten worksheets."""
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = OxmlElement('w:tcMar')
     for m_name, m_val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
@@ -118,7 +124,6 @@ def set_cell_margins(cell, top=100, bottom=100, left=150, right=150):
     tcPr.append(tcMar)
 
 def set_section_columns(section, num_cols):
-    """Enables native multi-column layout for modern Word documents."""
     sectPr = section._sectPr
     cols = sectPr.xpath('./w:cols')
     if cols:
@@ -126,7 +131,7 @@ def set_section_columns(section, num_cols):
     else:
         new_cols = OxmlElement('w:cols')
         new_cols.set(qn('w:num'), str(num_cols))
-        new_cols.set(qn('w:space'), '720')  # 0.5 inch spacing between columns
+        new_cols.set(qn('w:space'), '720')  
         sectPr.append(new_cols)
 
 def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_font_size: int):
@@ -135,14 +140,12 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
     
     is_early_childhood = grade_tier in ["Nursery", "PP / LKG / UKG"]
     
-    # Define exact typography & layout defaults per grade tier
     if is_early_childhood:
-        headline_fs = 18       # Question Headline / Instructions
-        question_fs = 22       # Questions, Options & Blanks
-        header_title_fs = 24   # School Title
-        meta_fs = 18           # Exam Meta Details & Name/Roll line
+        headline_fs = 18       
+        question_fs = 22       
+        header_title_fs = 24   
+        meta_fs = 18           
         
-        # Portrait A4 with generous padding for direct answer writing
         section.page_width = Mm(210)
         section.page_height = Mm(297)
         section.orientation = WD_ORIENT.PORTRAIT
@@ -151,7 +154,6 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
         section.left_margin = Inches(0.5)
         section.right_margin = Inches(0.5)
     else:
-        # Classes 1 to 4: Landscape A4 split into 2 structured columns
         headline_fs = base_font_size + 1
         question_fs = base_font_size
         header_title_fs = base_font_size + 4
@@ -173,7 +175,6 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
     style.font.name = selected_font
     style.font.size = Pt(question_fs)
     
-    # --- 1. School Header & Exam Title ---
     p_school = doc.add_paragraph()
     p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_school = p_school.add_run(data.school_name)
@@ -188,7 +189,6 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
     run_title.font.size = Pt(headline_fs)
     p_title.paragraph_format.space_after = Pt(6)
     
-    # --- 2. Metadata Block ---
     class_label = "Class" if language == "English" else ("শ্রেণী" if language == "Bengali" else "कक्षा")
     marks_label = "Full Marks" if language == "English" else ("পূর্ণমান" if language == "Bengali" else "पूर्णांक")
     subject_label = "Subject" if language == "English" else ("বিষয়" if language == "Bengali" else "विषय")
@@ -224,7 +224,6 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                     
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
     
-    # Student Details Line
     p_info = doc.add_paragraph()
     run_info = p_info.add_run(data.student_info_line)
     run_info.font.size = Pt(meta_fs)
@@ -236,7 +235,6 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
     p_div.add_run("—" * 50 if not is_early_childhood else "—" * 60)
     p_div.paragraph_format.space_after = Pt(12)
     
-    # --- 3. Content Blocks Builder ---
     for b in data.blocks:
         space_after_val = 14 if is_early_childhood else 6
         
@@ -244,17 +242,16 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
             p = doc.add_paragraph()
             p.paragraph_format.space_after = Pt(space_after_val)
             
-            # Smart Check: Section Headline / Instruction vs Question Text
             cleaned = b.text_content.strip()
             is_headline = cleaned.endswith((':', '।')) and not any(char.isdigit() for char in cleaned[:3])
             
             run = p.add_run(b.text_content)
             
             if is_headline:
-                run.font.size = Pt(headline_fs)  # 18pt for Headlines
+                run.font.size = Pt(headline_fs)  
                 run.bold = True
             else:
-                run.font.size = Pt(question_fs)  # 22pt for Questions & Options
+                run.font.size = Pt(question_fs)  
                 if cleaned.startswith(('১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '१', '२', '३', '४', '५', '६', '७', '८', '९', '०')):
                     run.bold = True
                 
@@ -263,7 +260,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 lp_head = doc.add_paragraph()
                 run_h = lp_head.add_run(b.text_content)
                 run_h.bold = True
-                run_h.font.size = Pt(headline_fs)  # 18pt Headline
+                run_h.font.size = Pt(headline_fs)  
                 lp_head.paragraph_format.space_after = Pt(6)
             if b.list_items:
                 for item in b.list_items:
@@ -271,18 +268,18 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                     lp.paragraph_format.left_indent = Inches(0.3)
                     lp.paragraph_format.space_after = Pt(8 if is_early_childhood else 3)
                     run_item = lp.add_run(item)
-                    run_item.font.size = Pt(question_fs)  # 22pt Items
+                    run_item.font.size = Pt(question_fs)  
                     
         elif b.block_type == 'grid_table_block':
             if b.text_content:
                 tp = doc.add_paragraph()
                 run_t = tp.add_run(b.text_content)
                 run_t.bold = True
-                run_t.font.size = Pt(headline_fs)  # 18pt Headline
+                run_t.font.size = Pt(headline_fs)  
             if b.table_rows and b.table_cols and b.table_data:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
-                set_table_borders(tbl, color="000000", sz="8")  # Solid Pure Black Border
+                set_table_borders(tbl, color="000000", sz="8")  
                 for r_idx, row_items in enumerate(b.table_data):
                     if r_idx < b.table_rows:
                         for c_idx, val in enumerate(row_items):
@@ -292,7 +289,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                                 if is_early_childhood:
                                     set_cell_margins(cell, top=220, bottom=220, left=200, right=200)
                                 for r in cell.paragraphs[0].runs:
-                                    r.font.size = Pt(question_fs)  # 22pt Table Text
+                                    r.font.size = Pt(question_fs)  
                 doc.add_paragraph().paragraph_format.space_after = Pt(10)
                 
         elif b.block_type == 'column_layout_block':
@@ -305,7 +302,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 num_cols = len(b.columns_data)
                 max_rows = max(len(col) for col in b.columns_data)
                 col_tbl = doc.add_table(rows=max_rows, cols=num_cols)
-                set_table_borders(col_tbl, color="000000", sz="8")  # Solid Pure Black Border
+                set_table_borders(col_tbl, color="000000", sz="8")  
                 col_width = Inches(3.2 / num_cols) if is_early_childhood else Inches(4.0 / num_cols)
                 for c in range(num_cols):
                     col_tbl.columns[c].width = col_width
@@ -315,7 +312,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                             cell = col_tbl.rows[r].cells[c]
                             cell.paragraphs[0].text = col_items[r]
                             for rn in cell.paragraphs[0].runs:
-                                rn.font.size = Pt(question_fs)  # 22pt Column Text
+                                rn.font.size = Pt(question_fs)  
                 doc.add_paragraph()
                 
         elif b.block_type == 'drawing_box_block':
@@ -328,7 +325,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
             box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
             default_h = (b.box_height_inches or 2.0) * (1.5 if is_early_childhood else 1.0)
             box_tbl.rows[0].height = Inches(default_h)
-            set_table_borders(box_tbl, color="000000", sz="8")  # Solid Pure Black Box Border
+            set_table_borders(box_tbl, color="000000", sz="8")  
             doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     bio = io.BytesIO()
@@ -366,7 +363,7 @@ with st.sidebar:
         custom_font_size = st.number_input("Base Font Size (Pt)", min_value=9, max_value=16, value=11)
     
     st.markdown("---")
-    st.caption("🔒 **Accuracy Mode:** Zero-temperature verification pipeline active.")
+    st.caption("⚡ **Engine:** Gemini 3.5 Flash (Free Tier)")
 
 # --- Session State Initialization ---
 if "parsed_data" not in st.session_state:
@@ -381,7 +378,7 @@ with col_left:
     st.markdown("### 01 / Intake Stream")
     uploaded_files = st.file_uploader(
         f"Upload {exam_language} exam sheets", 
-        type=["jpg", "jpeg", "png"], 
+        type=["jpg", "jpeg", "png", "pdf"], 
         accept_multiple_files=True
     )
     
@@ -392,8 +389,11 @@ with col_left:
         thumb_cols = st.columns(min(len(uploaded_files), 4))
         for idx, file in enumerate(uploaded_files[:4]):
             with thumb_cols[idx]:
-                img_preview = Image.open(file)
-                st.image(img_preview, use_container_width=True)
+                if file.name.lower().endswith('.pdf'):
+                    st.image("https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg", use_container_width=True)
+                else:
+                    img_preview = Image.open(file)
+                    st.image(img_preview, use_container_width=True)
         
         st.write("")
         if st.button("Run High-Precision Extraction"):
@@ -404,10 +404,21 @@ with col_left:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         img_list = []
+                        
+                        st.write("Extracting and optimizing files...")
                         for f in sorted_files:
-                            raw_img = Image.open(f)
-                            enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.7)).enhance(2.1)
-                            img_list.append(enhanced)
+                            if f.name.lower().endswith('.pdf'):
+                                pdf_bytes = f.read()
+                                pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                                for page_num in range(len(pdf_doc)):
+                                    page = pdf_doc.load_page(page_num)
+                                    pix = page.get_pixmap(dpi=200, alpha=False)
+                                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                                    img_list.append(optimize_image(img))
+                            else:
+                                raw_img = Image.open(f)
+                                enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.7)).enhance(2.1)
+                                img_list.append(optimize_image(enhanced))
                         
                         client = genai.Client(api_key=api_key)
                         
@@ -424,8 +435,10 @@ with col_left:
                         )
                         contents = [prompt] + img_list
                         
-                        # --- THE FALLBACK ROUTING LOGIC IS BACK ---
-                        fallback_models = ['gemini-3.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash']
+                        st.write(f"Running high-fidelity OCR on {len(img_list)} total page(s)...")
+
+                        # --- STRICT FREE-TIER GEN-3 MODELS ONLY ---
+                        fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite']
                         response = None
                         last_error = None
 
@@ -453,7 +466,6 @@ with col_left:
                                     
                         if not response:
                             raise Exception(f"All backup servers are currently busy or unavailable. Please try again in a few minutes. (Last Error: {last_error})")
-                        # --- END FALLBACK LOGIC ---
 
                         raw_json = json.loads(response.text)
                         st.session_state.parsed_data = UniversalExamPaper(**raw_json)

@@ -16,7 +16,7 @@ import io
 
 # --- Page Setup ---
 st.set_page_config(
-    page_title="Academic Bento Exam Studio (Max Accuracy)",
+    page_title="Academic Bento Exam Studio",
     page_icon="📖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -98,7 +98,10 @@ def set_table_borders(table, color="cccccc"):
     tblBorders = OxmlElement('w:tblBorders')
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
-        border.set(qn('w:val'), 'single'); border.set(qn('w:sz'), '4'); border.set(qn('w:space'), '0'); border.set(qn('w:color'), color)  
+        border.set(qn('w:val'), 'single')
+        border.set(qn('w:sz'), '4')
+        border.set(qn('w:space'), '0')
+        border.set(qn('w:color'), color)  
         tblBorders.append(border)
     tblPr.append(tblBorders)
 
@@ -122,25 +125,37 @@ def set_section_columns(section, num_cols):
     else:
         new_cols = OxmlElement('w:cols')
         new_cols.set(qn('w:num'), str(num_cols))
-        new_cols.set(qn('w:space'), '720') # 0.5 inch spacing between columns
+        new_cols.set(qn('w:space'), '720')  # 0.5 inch spacing between columns
         sectPr.append(new_cols)
 
 def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_font_size: int):
     doc = Document()
     section = doc.sections[0]
     
-    # Configure Layout Profile according to Grade Tier
-    if grade_tier in ["Nursery", "PP / LKG / UKG"]:
-        # Portrait A4 with generous spacing for combined question-answers
+    is_early_childhood = grade_tier in ["Nursery", "PP / LKG / UKG"]
+    
+    # Define exact typography & layout defaults per grade tier
+    if is_early_childhood:
+        headline_fs = 18       # Question Headline / Instructions
+        question_fs = 22       # Questions, Options & Blanks
+        header_title_fs = 24   # School Title
+        meta_fs = 18           # Exam Meta Details & Name/Roll line
+        
+        # Portrait A4 with generous padding for direct answer writing
         section.page_width = Mm(210)
         section.page_height = Mm(297)
         section.orientation = WD_ORIENT.PORTRAIT
-        section.top_margin = Inches(0.6)
-        section.bottom_margin = Inches(0.6)
-        section.left_margin = Inches(0.6)
-        section.right_margin = Inches(0.6)
+        section.top_margin = Inches(0.5)
+        section.bottom_margin = Inches(0.5)
+        section.left_margin = Inches(0.5)
+        section.right_margin = Inches(0.5)
     else:
-        # Classes 1-4: Landscape A4 with 2 Columns (Question-only layout format)
+        # Classes 1 to 4: Landscape A4 split into 2 structured columns
+        headline_fs = base_font_size + 1
+        question_fs = base_font_size
+        header_title_fs = base_font_size + 4
+        meta_fs = base_font_size
+        
         section.page_width = Mm(297)
         section.page_height = Mm(210)
         section.orientation = WD_ORIENT.LANDSCAPE
@@ -155,23 +170,24 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
         
     style = doc.styles['Normal']
     style.font.name = selected_font
-    style.font.size = Pt(base_font_size)
+    style.font.size = Pt(question_fs)
     
-    # Header Section
+    # --- 1. School Header & Exam Title ---
     p_school = doc.add_paragraph()
     p_school.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_school = p_school.add_run(data.school_name)
     run_school.bold = True
-    run_school.font.size = Pt(base_font_size + 4)
+    run_school.font.size = Pt(header_title_fs)
     p_school.paragraph_format.space_after = Pt(2)
     
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_title = p_title.add_run(data.exam_title)
     run_title.bold = True
-    run_title.font.size = Pt(base_font_size + 2)
+    run_title.font.size = Pt(headline_fs)
     p_title.paragraph_format.space_after = Pt(6)
     
+    # --- 2. Metadata Block ---
     class_label = "Class" if language == "English" else ("শ্রেণী" if language == "Bengali" else "कक्षा")
     marks_label = "Full Marks" if language == "English" else ("পূর্ণমান" if language == "Bengali" else "पूर्णांक")
     subject_label = "Subject" if language == "English" else ("বিষয়" if language == "Bengali" else "विषय")
@@ -185,7 +201,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
 
     meta_table = doc.add_table(rows=2, cols=2)
     meta_table.autofit = False
-    col_w = Inches(3.4) if grade_tier in ["Nursery", "PP / LKG / UKG"] else Inches(4.5)
+    col_w = Inches(3.5) if is_early_childhood else Inches(4.5)
     meta_table.columns[0].width = col_w
     meta_table.columns[1].width = col_w
     
@@ -203,53 +219,65 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 p.paragraph_format.space_after = Pt(2)
                 for run in p.runs:
                     run.bold = True
-                    run.font.size = Pt(base_font_size)
+                    run.font.size = Pt(meta_fs)
                     
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
     
+    # Student Details Line
     p_info = doc.add_paragraph()
-    p_info.add_run(data.student_info_line).font.size = Pt(base_font_size)
+    run_info = p_info.add_run(data.student_info_line)
+    run_info.font.size = Pt(meta_fs)
+    run_info.bold = True
     p_info.paragraph_format.space_after = Pt(6)
     
     p_div = doc.add_paragraph()
     p_div.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_div.add_run("—" * 50 if grade_tier not in ["Nursery", "PP / LKG / UKG"] else "—" * 65)
-    p_div.paragraph_format.space_after = Pt(10)
+    p_div.add_run("—" * 50 if not is_early_childhood else "—" * 60)
+    p_div.paragraph_format.space_after = Pt(12)
     
-    # Content Blocks Formatting
+    # --- 3. Content Blocks Builder ---
     for b in data.blocks:
-        space_after_val = 12 if grade_tier in ["Nursery", "PP / LKG / UKG"] else 6
+        space_after_val = 14 if is_early_childhood else 6
         
         if b.block_type == 'text_paragraph' and b.text_content:
             p = doc.add_paragraph()
             p.paragraph_format.space_after = Pt(space_after_val)
-            run = p.add_run(b.text_content)
-            run.font.size = Pt(base_font_size)
             
-            is_num_start = b.text_content.strip().startswith(('১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '१', '२', '३', '४', '५', '६', '७', '८', '९', '०'))
-            if "।" in b.text_content or ":" in b.text_content or is_num_start:
+            # Smart Check: Section Headline / Instruction vs Question Text
+            cleaned = b.text_content.strip()
+            is_headline = cleaned.endswith((':', '।')) and not any(char.isdigit() for char in cleaned[:3])
+            
+            run = p.add_run(b.text_content)
+            
+            if is_headline:
+                run.font.size = Pt(headline_fs)  # 18pt for Headlines
                 run.bold = True
+            else:
+                run.font.size = Pt(question_fs)  # 22pt for Questions & Options
+                if cleaned.startswith(('১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯', '০', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '१', '२', '३', '४', '५', '६', '७', '८', '९', '०')):
+                    run.bold = True
                 
         elif b.block_type == 'list_block':
             if b.text_content:
                 lp_head = doc.add_paragraph()
                 run_h = lp_head.add_run(b.text_content)
                 run_h.bold = True
-                run_h.font.size = Pt(base_font_size)
+                run_h.font.size = Pt(headline_fs)  # 18pt Headline
+                lp_head.paragraph_format.space_after = Pt(6)
             if b.list_items:
                 for item in b.list_items:
                     lp = doc.add_paragraph()
                     lp.paragraph_format.left_indent = Inches(0.3)
-                    lp.paragraph_format.space_after = Pt(6 if grade_tier in ["Nursery", "PP / LKG / UKG"] else 3)
+                    lp.paragraph_format.space_after = Pt(8 if is_early_childhood else 3)
                     run_item = lp.add_run(item)
-                    run_item.font.size = Pt(base_font_size)
+                    run_item.font.size = Pt(question_fs)  # 22pt Items
                     
         elif b.block_type == 'grid_table_block':
             if b.text_content:
                 tp = doc.add_paragraph()
                 run_t = tp.add_run(b.text_content)
                 run_t.bold = True
-                run_t.font.size = Pt(base_font_size)
+                run_t.font.size = Pt(headline_fs)  # 18pt Headline
             if b.table_rows and b.table_cols and b.table_data:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
@@ -260,24 +288,23 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                             if c_idx < b.table_cols:
                                 cell = tbl.rows[r_idx].cells[c_idx]
                                 cell.paragraphs[0].text = val
-                                # Extra generous padding for kindergarten answer-sheet tables
-                                if grade_tier in ["Nursery", "PP / LKG / UKG"]:
-                                    set_cell_margins(cell, top=180, bottom=180, left=200, right=200)
+                                if is_early_childhood:
+                                    set_cell_margins(cell, top=220, bottom=220, left=200, right=200)
                                 for r in cell.paragraphs[0].runs:
-                                    r.font.size = Pt(base_font_size)
-                doc.add_paragraph().paragraph_format.space_after = Pt(8)
+                                    r.font.size = Pt(question_fs)  # 22pt Table Text
+                doc.add_paragraph().paragraph_format.space_after = Pt(10)
                 
         elif b.block_type == 'column_layout_block':
             if b.text_content:
                 cp = doc.add_paragraph()
                 run_c = cp.add_run(b.text_content)
                 run_c.bold = True
-                run_c.font.size = Pt(base_font_size)
+                run_c.font.size = Pt(headline_fs)
             if b.columns_data:
                 num_cols = len(b.columns_data)
                 max_rows = max(len(col) for col in b.columns_data)
                 col_tbl = doc.add_table(rows=max_rows, cols=num_cols)
-                col_width = Inches(3.2 / num_cols) if grade_tier in ["Nursery", "PP / LKG / UKG"] else Inches(4.0 / num_cols)
+                col_width = Inches(3.2 / num_cols) if is_early_childhood else Inches(4.0 / num_cols)
                 for c in range(num_cols):
                     col_tbl.columns[c].width = col_width
                     col_items = b.columns_data[c]
@@ -286,7 +313,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                             cell = col_tbl.rows[r].cells[c]
                             cell.paragraphs[0].text = col_items[r]
                             for rn in cell.paragraphs[0].runs:
-                                rn.font.size = Pt(base_font_size)
+                                rn.font.size = Pt(question_fs)  # 22pt Column Text
                 doc.add_paragraph()
                 
         elif b.block_type == 'drawing_box_block':
@@ -294,20 +321,19 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 dp = doc.add_paragraph()
                 run_d = dp.add_run(b.text_content)
                 run_d.bold = True
-                run_d.font.size = Pt(base_font_size)
+                run_d.font.size = Pt(headline_fs)
             box_tbl = doc.add_table(rows=1, cols=1)
             box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
-            # Larger box height for kindergarten drawing/coloring or handwriting blocks
-            default_h = (b.box_height_inches or 2.0) * (1.4 if grade_tier in ["Nursery", "PP / LKG / UKG"] else 1.0)
+            default_h = (b.box_height_inches or 2.0) * (1.5 if is_early_childhood else 1.0)
             box_tbl.rows[0].height = Inches(default_h)
             set_table_borders(box_tbl, "888888")
-            doc.add_paragraph().paragraph_format.space_after = Pt(10)
+            doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     bio = io.BytesIO()
     doc.save(bio)
     return bio.getvalue()
 
-# --- 3. UI Header & Sidebar Matrix ---
+# --- 3. UI Header & Sidebar Controls ---
 st.markdown('<p class="main-title">Academic Studio</p>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">High-Precision Editorial Digitizer & Automated Layout Compiler</p>', unsafe_allow_html=True)
 
@@ -322,23 +348,20 @@ with st.sidebar:
     grade_tier = st.selectbox(
         "🎓 Target Grade Tier", 
         ["Nursery", "PP / LKG / UKG", "Classes 1 to 4"],
-        help="Nursery/LKG uses large portrait sheets with combined space for answers. Classes 1-4 use compact landscape 2-column sheets."
+        help="Nursery/PP automatically configures 18pt headlines & 22pt questions with generous answer padding."
     )
     
     exam_language = st.selectbox("🌐 Document Language", ["Bengali", "English", "Hindi"])
     
     st.markdown("---")
-    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Typography Engine</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Typography Preset</h3>", unsafe_allow_html=True)
     
-    # Default smart assignment based on selected tier
-    default_fs = 16 if grade_tier in ["Nursery", "PP / LKG / UKG"] else 11
-    custom_font_size = st.number_input(
-        "Base Body Font Size (Pt)", 
-        min_value=9, 
-        max_value=22, 
-        value=default_fs, 
-        help="Nursery presets default to larger fonts (16pt+) for beginners. Classes 1-4 default to crisp compact sizing (11pt)."
-    )
+    if grade_tier in ["Nursery", "PP / LKG / UKG"]:
+        st.info("📏 **Early Childhood Profile Active:**\n- **Headlines:** `18pt` (Bold)\n- **Questions:** `22pt` (Spacious)")
+        custom_font_size = 22
+    else:
+        st.info("📑 **Standard Exam Profile Active:**\n- **Layout:** Landscape A4 (2 Columns)")
+        custom_font_size = st.number_input("Base Font Size (Pt)", min_value=9, max_value=16, value=11)
     
     st.markdown("---")
     st.caption("🔒 **Accuracy Mode:** Zero-temperature verification pipeline active.")

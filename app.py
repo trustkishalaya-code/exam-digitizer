@@ -13,7 +13,6 @@ from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import io
-import fitz  # PyMuPDF for PDF support
 
 # --- Page Setup ---
 st.set_page_config(
@@ -378,7 +377,7 @@ with col_left:
     st.markdown("### 01 / Intake Stream")
     uploaded_files = st.file_uploader(
         f"Upload {exam_language} exam sheets", 
-        type=["jpg", "jpeg", "png", "pdf"], 
+        type=["jpg", "jpeg", "png"], 
         accept_multiple_files=True
     )
     
@@ -389,11 +388,8 @@ with col_left:
         thumb_cols = st.columns(min(len(uploaded_files), 4))
         for idx, file in enumerate(uploaded_files[:4]):
             with thumb_cols[idx]:
-                if file.name.lower().endswith('.pdf'):
-                    st.image("https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg", use_container_width=True)
-                else:
-                    img_preview = Image.open(file)
-                    st.image(img_preview, use_container_width=True)
+                img_preview = Image.open(file)
+                st.image(img_preview, use_container_width=True)
         
         st.write("")
         if st.button("Run High-Precision Extraction"):
@@ -407,18 +403,9 @@ with col_left:
                         
                         st.write("Extracting and optimizing files...")
                         for f in sorted_files:
-                            if f.name.lower().endswith('.pdf'):
-                                pdf_bytes = f.read()
-                                pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-                                for page_num in range(len(pdf_doc)):
-                                    page = pdf_doc.load_page(page_num)
-                                    pix = page.get_pixmap(dpi=200, alpha=False)
-                                    img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                                    img_list.append(optimize_image(img))
-                            else:
-                                raw_img = Image.open(f)
-                                enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.7)).enhance(2.1)
-                                img_list.append(optimize_image(enhanced))
+                            raw_img = Image.open(f)
+                            enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.7)).enhance(2.1)
+                            img_list.append(optimize_image(enhanced))
                         
                         client = genai.Client(api_key=api_key)
                         

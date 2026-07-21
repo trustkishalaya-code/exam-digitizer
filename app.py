@@ -424,17 +424,37 @@ with col_left:
                         )
                         contents = [prompt] + img_list
                         
-                        response = client.models.generate_content(
-                            model='gemini-3.5-flash',
-                            contents=contents,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction,
-                                response_mime_type="application/json",
-                                response_schema=UniversalExamPaper,
-                                temperature=0.0
-                            )
-                        )
-                        
+                        # --- THE FALLBACK ROUTING LOGIC IS BACK ---
+                        fallback_models = ['gemini-3.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash']
+                        response = None
+                        last_error = None
+
+                        for model_name in fallback_models:
+                            try:
+                                response = client.models.generate_content(
+                                    model=model_name,
+                                    contents=contents,
+                                    config=types.GenerateContentConfig(
+                                        system_instruction=system_instruction,
+                                        response_mime_type="application/json",
+                                        response_schema=UniversalExamPaper,
+                                        temperature=0.0
+                                    )
+                                )
+                                break
+                            except Exception as e:
+                                error_msg = str(e)
+                                if "503" in error_msg or "UNAVAILABLE" in error_msg or "429" in error_msg or "404" in error_msg or "NOT_FOUND" in error_msg:
+                                    st.warning(f"Model {model_name} unavailable or busy. Rerouting...")
+                                    last_error = error_msg
+                                    continue
+                                else:
+                                    raise e
+                                    
+                        if not response:
+                            raise Exception(f"All backup servers are currently busy or unavailable. Please try again in a few minutes. (Last Error: {last_error})")
+                        # --- END FALLBACK LOGIC ---
+
                         raw_json = json.loads(response.text)
                         st.session_state.parsed_data = UniversalExamPaper(**raw_json)
                         status.update(label="High-precision extraction complete.", state="complete", expanded=False)

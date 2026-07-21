@@ -93,13 +93,14 @@ class UniversalExamPaper(BaseModel):
     blocks: List[LayoutBlock] = Field(description="Chronological sequence of structured objects found")
 
 # --- 2. Advanced Typography & Word Engine ---
-def set_table_borders(table, color="cccccc"):
+def set_table_borders(table, color="000000", sz="8"):
+    """Applies crisp, solid borders to Word tables (default full black #000000)."""
     tblPr = table._tbl.tblPr
     tblBorders = OxmlElement('w:tblBorders')
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
         border.set(qn('w:val'), 'single')
-        border.set(qn('w:sz'), '4')
+        border.set(qn('w:sz'), sz)  # 8 = 1pt sharp black line
         border.set(qn('w:space'), '0')
         border.set(qn('w:color'), color)  
         tblBorders.append(border)
@@ -281,7 +282,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
             if b.table_rows and b.table_cols and b.table_data:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
                 tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
-                set_table_borders(tbl, "cccccc")
+                set_table_borders(tbl, color="000000", sz="8")  # Solid Pure Black Border
                 for r_idx, row_items in enumerate(b.table_data):
                     if r_idx < b.table_rows:
                         for c_idx, val in enumerate(row_items):
@@ -304,6 +305,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 num_cols = len(b.columns_data)
                 max_rows = max(len(col) for col in b.columns_data)
                 col_tbl = doc.add_table(rows=max_rows, cols=num_cols)
+                set_table_borders(col_tbl, color="000000", sz="8")  # Solid Pure Black Border
                 col_width = Inches(3.2 / num_cols) if is_early_childhood else Inches(4.0 / num_cols)
                 for c in range(num_cols):
                     col_tbl.columns[c].width = col_width
@@ -326,7 +328,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
             box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
             default_h = (b.box_height_inches or 2.0) * (1.5 if is_early_childhood else 1.0)
             box_tbl.rows[0].height = Inches(default_h)
-            set_table_borders(box_tbl, "888888")
+            set_table_borders(box_tbl, color="000000", sz="8")  # Solid Pure Black Box Border
             doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
     bio = io.BytesIO()
@@ -357,10 +359,10 @@ with st.sidebar:
     st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Typography Preset</h3>", unsafe_allow_html=True)
     
     if grade_tier in ["Nursery", "PP / LKG / UKG"]:
-        st.info("📏 **Early Childhood Profile Active:**\n- **Headlines:** `18pt` (Bold)\n- **Questions:** `22pt` (Spacious)")
+        st.info("📏 **Early Childhood Profile Active:**\n- **Headlines:** `18pt` (Bold)\n- **Questions:** `22pt` (Spacious)\n- **Borders:** Full Black (`#000000`)")
         custom_font_size = 22
     else:
-        st.info("📑 **Standard Exam Profile Active:**\n- **Layout:** Landscape A4 (2 Columns)")
+        st.info("📑 **Standard Exam Profile Active:**\n- **Layout:** Landscape A4 (2 Columns)\n- **Borders:** Full Black (`#000000`)")
         custom_font_size = st.number_input("Base Font Size (Pt)", min_value=9, max_value=16, value=11)
     
     st.markdown("---")

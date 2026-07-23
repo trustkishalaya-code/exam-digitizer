@@ -9,6 +9,7 @@ import docx
 from docx import Document
 from docx.shared import Pt, Inches, Mm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_ORIENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -277,7 +278,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 run_t.font.size = Pt(headline_fs)  
             if b.table_rows and b.table_cols and b.table_data:
                 tbl = doc.add_table(rows=b.table_rows, cols=b.table_cols)
-                tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
+                tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
                 set_table_borders(tbl, color="000000", sz="8")  
                 for r_idx, row_items in enumerate(b.table_data):
                     if r_idx < b.table_rows:
@@ -321,7 +322,7 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
                 run_d.bold = True
                 run_d.font.size = Pt(headline_fs)
             box_tbl = doc.add_table(rows=1, cols=1)
-            box_tbl.alignment = docx.enum.table.WD_TABLE_ALIGNMENT.CENTER
+            box_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
             default_h = (b.box_height_inches or 2.0) * (1.5 if is_early_childhood else 1.0)
             box_tbl.rows[0].height = Inches(default_h)
             set_table_borders(box_tbl, color="000000", sz="8")  
@@ -337,7 +338,7 @@ st.markdown('<p class="sub-title">High-Precision Editorial Digitizer & Automated
 
 with st.sidebar:
     st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Studio Controls</h3>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.divider()
     
     api_key = st.text_input("🔑 Gemini API Key", type="password")
     if not api_key:
@@ -351,7 +352,7 @@ with st.sidebar:
     
     exam_language = st.selectbox("🌐 Document Language", ["Bengali", "English", "Hindi"])
     
-    st.markdown("---")
+    st.divider()
     st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Typography Preset</h3>", unsafe_allow_html=True)
     
     if grade_tier in ["Nursery", "PP / LKG / UKG"]:
@@ -361,8 +362,15 @@ with st.sidebar:
         st.info("📑 **Standard Exam Profile Active:**\n- **Layout:** Landscape A4 (2 Columns)\n- **Borders:** Full Black (`#000000`)")
         custom_font_size = st.number_input("Base Font Size (Pt)", min_value=9, max_value=16, value=11)
     
-    st.markdown("---")
-    st.caption("⚡ **Engine:** Gemini 3.5 Flash (Free Tier)")
+    st.divider()
+    st.caption("⚡ **Engine:** Gemini Free Tier")
+    
+    # --- Reset Button ---
+    st.write("")
+    if st.button("🗑️ Clear Workspace", type="secondary"):
+        st.session_state.parsed_data = None
+        st.session_state.original_filename = "Exam_Output.docx"
+        st.rerun()
 
 # --- Session State Initialization ---
 if "parsed_data" not in st.session_state:
@@ -383,29 +391,29 @@ with col_left:
     
     if uploaded_files:
         st.session_state.original_filename = uploaded_files[0].name.rsplit('.', 1)[0] + ".docx"
-        st.success(f"Loaded {len(uploaded_files)} source files.")
-        
-        thumb_cols = st.columns(min(len(uploaded_files), 4))
-        for idx, file in enumerate(uploaded_files[:4]):
-            with thumb_cols[idx]:
-                img_preview = Image.open(file)
-                st.image(img_preview, use_container_width=True)
+        st.success(f"Loaded {len(uploaded_files)} source files ready for processing.")
         
         st.write("")
         if st.button("Run High-Precision Extraction"):
             if not api_key:
                 st.error("Missing API Key.")
             else:
-                with st.status("Executing deep dual-pass accuracy pipeline...", expanded=True) as status:
+                with st.status("Reading & processing files...", expanded=True) as status:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         img_list = []
                         
-                        st.write("Extracting and optimizing files...")
+                        st.write("Preparing raw images...")
                         for f in sorted_files:
                             raw_img = Image.open(f)
-                            enhanced = ImageEnhance.Sharpness(ImageEnhance.Contrast(raw_img).enhance(1.7)).enhance(2.1)
-                            img_list.append(optimize_image(enhanced))
+                            
+                            # Original contrast/sharpness filters added back
+                            enhancer = ImageEnhance.Contrast(raw_img)
+                            img_cont = enhancer.enhance(1.7)
+                            enhancer2 = ImageEnhance.Sharpness(img_cont)
+                            enhanced_img = enhancer2.enhance(2.1)
+                            
+                            img_list.append(optimize_image(enhanced_img))
                         
                         client = genai.Client(api_key=api_key)
                         
@@ -424,7 +432,7 @@ with col_left:
                         
                         st.write(f"Running high-fidelity OCR on {len(img_list)} total page(s)...")
 
-                        # --- STRICT FREE-TIER GEN-3 MODELS ONLY ---
+                        # Restored Original Models
                         fallback_models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite']
                         response = None
                         last_error = None
@@ -454,11 +462,22 @@ with col_left:
                         if not response:
                             raise Exception(f"All backup servers are currently busy or unavailable. Please try again in a few minutes. (Last Error: {last_error})")
 
-                        raw_json = json.loads(response.text)
+                        # Safe JSON Parsing
+                        st.write("Parsing data...")
+                        raw_text = response.text.strip()
+                        if raw_text.startswith("```json"):
+                            raw_text = raw_text[7:-3].strip()
+                        elif raw_text.startswith("```"):
+                            raw_text = raw_text[3:-3].strip()
+                            
+                        raw_json = json.loads(raw_text)
                         st.session_state.parsed_data = UniversalExamPaper(**raw_json)
-                        status.update(label="High-precision extraction complete.", state="complete", expanded=False)
+                        status.update(label="Extraction complete!", state="complete", expanded=False)
                         st.rerun()
                         
+                    except json.JSONDecodeError:
+                        status.update(label="Extraction failed", state="error")
+                        st.error("Failed to parse API output properly. Please try clicking extract again.")
                     except Exception as e:
                         status.update(label="Extraction failed", state="error")
                         st.error(f"Error: {e}")
@@ -467,7 +486,7 @@ with col_right:
     st.markdown("### 02 / Studio Review & Export")
     
     if st.session_state.parsed_data is None:
-        st.info("Upload source files and run extraction to preview components here.")
+        st.info("Upload source files and run extraction to preview and export documents here.")
     else:
         data = st.session_state.parsed_data
         
@@ -486,29 +505,20 @@ with col_right:
                 
             data.student_info_line = st.text_input("Student Info Placeholder", value=data.student_info_line)
             
-            st.markdown("---")
-            st.markdown("#### Structural Elements Editor")
+            # The Structural Elements Editor has been removed entirely for a cleaner UI!
             
-            for i, block in enumerate(data.blocks):
-                if block.block_type == 'text_paragraph':
-                    block.text_content = st.text_area(f"Block {i+1} (Text)", value=block.text_content or "", height=70)
-                elif block.block_type == 'list_block':
-                    block.text_content = st.text_input(f"Block {i+1} (List Header)", value=block.text_content or "")
-                elif block.block_type == 'drawing_box_block':
-                    block.text_content = st.text_input(f"Block {i+1} (Drawing Box Label)", value=block.text_content or "")
-            
-            update_submitted = st.form_submit_button("Update Layout State")
+            update_submitted = st.form_submit_button("💾 Save Metadata Edits")
             
             if update_submitted:
-                st.success("Layout modified successfully.")
+                st.success("Metadata updated successfully! Ready for download.")
         
-        st.markdown("---")
+        st.divider()
         st.markdown("#### Download Output Document")
         
         word_bytes = create_docx(st.session_state.parsed_data, exam_language, grade_tier, int(custom_font_size))
         
         st.download_button(
-            label=f"Download {st.session_state.original_filename}",
+            label=f"⬇️ Download {st.session_state.original_filename}",
             data=word_bytes,
             file_name=st.session_state.original_filename,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"

@@ -18,57 +18,107 @@ import io
 # --- Page Setup ---
 st.set_page_config(
     page_title="Academic Bento Exam Studio",
-    page_icon="📖",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 🎨 Academic Bento & Editorial Minimalist UI Design System ---
+# --- 🚀 VIBRANT, BOLD, AND COLORFUL UI DESIGN SYSTEM ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap');
 
     html, body, [class*="css"] { 
-        font-family: 'Plus Jakarta Sans', sans-serif !important; 
-        background-color: #F8F9FA !important; 
-        color: #1A1D20 !important; 
+        font-family: 'Outfit', sans-serif !important; 
+        background-color: #F8FAFC !important; /* Very light cool-gray background so colors POP */
+        color: #0F172A !important; 
     }
     
-    h1, h2, h3, .serif-title { font-family: 'Instrument Serif', serif !important; }
+    h1, h2, h3, h4 { 
+        font-weight: 900 !important; 
+        letter-spacing: -1px !important; 
+    }
     
+    /* Massive, colorful gradient title */
     .main-title {
-        font-size: 3.5rem; font-weight: 400; text-align: left;
-        color: #111315; letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 0px;
+        font-size: 4.5rem; font-weight: 900; text-align: left;
+        background: linear-gradient(90deg, #FF3366, #9933FF, #00C3FF);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.1; margin-bottom: 0px; text-transform: uppercase;
+        animation: shine 5s linear infinite;
     }
     
-    .sub-title { text-align: left; color: #606873; font-size: 1.05rem; font-weight: 500; margin-bottom: 25px; }
-
-    [data-testid="stSidebar"] { background: #F1F3F5 !important; border-right: 1px solid #E2E8F0 !important; }
-
-    .bento-card {
-        background: #FFFFFF; border: 2px solid #E2E8F0; border-radius: 16px;
-        padding: 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02); margin-bottom: 20px;
+    @keyframes shine {
+        to { background-position: 200% center; }
+    }
+    
+    .sub-title { 
+        text-align: left; color: #FF3366; font-size: 1.5rem; 
+        font-weight: 800; margin-bottom: 30px; letter-spacing: 0.5px;
     }
 
+    /* Bold Sidebar */
+    [data-testid="stSidebar"] { 
+        background-color: #FFFFFF !important; 
+        border-right: 5px solid #9933FF !important; 
+        box-shadow: 10px 0 30px rgba(153, 51, 255, 0.05);
+    }
+    
+    /* Make labels inside the app ultra-bold and colorful */
+    label { 
+        font-weight: 800 !important; 
+        font-size: 1.15rem !important; 
+        color: #9933FF !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Chunky Upload Zone */
     [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #CBD5E1 !important; background-color: #FAFAFA !important;
-        border-radius: 12px !important; padding: 30px 20px !important; transition: all 0.2s ease;
+        border: 4px dashed #00C3FF !important; 
+        background-color: #F0FBFF !important;
+        border-radius: 20px !important; 
+        padding: 40px 20px !important; 
+        transition: all 0.3s ease;
     }
-    [data-testid="stFileUploadDropzone"]:hover { background-color: #F1F5F9 !important; border-color: #0F172A !important; }
+    [data-testid="stFileUploadDropzone"]:hover { 
+        background-color: #E0F8FF !important; 
+        border-color: #FF3366 !important; 
+        transform: scale(1.02);
+    }
 
+    /* Primary Action Buttons */
     .stButton>button {
-        width: 100%; background-color: #0F172A; padding: 12px 20px; text-align: center; 
-        color: #FFFFFF !important; border-radius: 10px; border: none; font-weight: 600; font-size: 0.95rem;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15); transition: transform 0.1s ease, background-color 0.2s ease;
+        width: 100%; background: linear-gradient(90deg, #9933FF, #FF3366); 
+        padding: 16px 20px; text-align: center; 
+        color: #FFFFFF !important; border-radius: 16px; border: none; 
+        font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px;
+        box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4); 
+        transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
-    .stButton>button:hover { background-color: #334155; transform: translateY(-1px); }
+    .stButton>button:hover { 
+        transform: translateY(-4px) scale(1.02); 
+        box-shadow: 0 15px 30px rgba(255, 51, 102, 0.6); 
+    }
     
+    /* Success / Download Button */
     .stDownloadButton>button {
-        width: 100%; background-color: #0D9488; padding: 12px 20px; text-align: center; 
-        color: #FFFFFF !important; border-radius: 10px; border: none; font-weight: 700;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2); transition: transform 0.1s ease, background-color 0.2s ease;
+        width: 100%; background: linear-gradient(90deg, #00FF87, #60EFFF); 
+        padding: 16px 20px; text-align: center; 
+        color: #000000 !important; border-radius: 16px; border: none; 
+        font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px;
+        box-shadow: 0 8px 25px rgba(0, 255, 135, 0.4); 
+        transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
-    .stDownloadButton>button:hover { background-color: #0F766E; transform: translateY(-1px); }
+    .stDownloadButton>button:hover { 
+        transform: translateY(-4px) scale(1.02); 
+        box-shadow: 0 15px 30px rgba(0, 255, 135, 0.6); 
+    }
+    
+    /* Larger markdown text */
+    p, li { font-size: 1.15rem; font-weight: 500; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -334,40 +384,40 @@ def create_docx(data: UniversalExamPaper, language: str, grade_tier: str, base_f
 
 # --- 3. UI Header & Sidebar Controls ---
 st.markdown('<p class="main-title">Academic Studio</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">High-Precision Editorial Digitizer & Automated Layout Compiler</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">SUPERCHARGED DIGITIZER & LAYOUT COMPILER ⚡</p>', unsafe_allow_html=True)
 
 with st.sidebar:
-    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Studio Controls</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2rem; color: #111315;'>STUDIO CONTROLS 🎛️</h3>", unsafe_allow_html=True)
     st.divider()
     
-    api_key = st.text_input("🔑 Gemini API Key", type="password")
+    api_key = st.text_input("🔑 GEMINI API KEY", type="password")
     if not api_key:
-        st.warning("⚠️ Access Key required.")
+        st.warning("⚠️ Access Key required to launch.")
         
     grade_tier = st.selectbox(
-        "🎓 Target Grade Tier", 
+        "🎓 TARGET GRADE TIER", 
         ["Nursery", "PP / LKG / UKG", "Classes 1 to 4"],
         help="Nursery/PP automatically configures 18pt headlines & 22pt questions with generous answer padding."
     )
     
-    exam_language = st.selectbox("🌐 Document Language", ["Bengali", "English", "Hindi"])
+    exam_language = st.selectbox("🌐 DOCUMENT LANGUAGE", ["Bengali", "English", "Hindi"])
     
     st.divider()
-    st.markdown("<h3 style='font-family: Instrument Serif; font-size: 1.8rem; color: #111315;'>Typography Preset</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-size: 2rem; color: #111315;'>TYPOGRAPHY 🎨</h3>", unsafe_allow_html=True)
     
     if grade_tier in ["Nursery", "PP / LKG / UKG"]:
         st.info("📏 **Early Childhood Profile Active:**\n- **Headlines:** `18pt` (Bold)\n- **Questions:** `22pt` (Spacious)\n- **Borders:** Full Black (`#000000`)")
         custom_font_size = 22
     else:
         st.info("📑 **Standard Exam Profile Active:**\n- **Layout:** Landscape A4 (2 Columns)\n- **Borders:** Full Black (`#000000`)")
-        custom_font_size = st.number_input("Base Font Size (Pt)", min_value=9, max_value=16, value=11)
+        custom_font_size = st.number_input("BASE FONT SIZE (PT)", min_value=9, max_value=16, value=11)
     
     st.divider()
     st.caption("⚡ **Engine:** Gemini Free Tier")
     
     # --- Reset Button ---
     st.write("")
-    if st.button("🗑️ Clear Workspace", type="secondary"):
+    if st.button("🗑️ CLEAR WORKSPACE", type="secondary"):
         st.session_state.parsed_data = None
         st.session_state.original_filename = "Exam_Output.docx"
         st.rerun()
@@ -382,7 +432,7 @@ if "original_filename" not in st.session_state:
 col_left, col_right = st.columns([1, 1], gap="medium")
 
 with col_left:
-    st.markdown("### 01 / Intake Stream")
+    st.markdown("### 01 // INTAKE STREAM 📥")
     uploaded_files = st.file_uploader(
         f"Upload {exam_language} exam sheets", 
         type=["jpg", "jpeg", "png"], 
@@ -391,14 +441,14 @@ with col_left:
     
     if uploaded_files:
         st.session_state.original_filename = uploaded_files[0].name.rsplit('.', 1)[0] + ".docx"
-        st.success(f"Loaded {len(uploaded_files)} source files ready for processing.")
+        st.success(f"🔥 BOOM! Loaded {len(uploaded_files)} source files ready for processing.")
         
         st.write("")
-        if st.button("Run High-Precision Extraction"):
+        if st.button("🚀 RUN HIGH-PRECISION EXTRACTION"):
             if not api_key:
                 st.error("Missing API Key.")
             else:
-                with st.status("Reading & processing files...", expanded=True) as status:
+                with st.status("⚡ Reading & processing files...", expanded=True) as status:
                     try:
                         sorted_files = sorted(uploaded_files, key=lambda x: x.name)
                         img_list = []
@@ -483,7 +533,7 @@ with col_left:
                         st.error(f"Error: {e}")
 
 with col_right:
-    st.markdown("### 02 / Studio Review & Export")
+    st.markdown("### 02 // STUDIO REVIEW & EXPORT 📤")
     
     if st.session_state.parsed_data is None:
         st.info("Upload source files and run extraction to preview and export documents here.")
@@ -491,7 +541,7 @@ with col_right:
         data = st.session_state.parsed_data
         
         with st.form("exam_editor_form"):
-            st.markdown("#### Document Metadata")
+            st.markdown("#### DOCUMENT METADATA 📄")
             data.school_name = st.text_input("School Name", value=data.school_name)
             data.exam_title = st.text_input("Exam Title", value=data.exam_title)
             
@@ -507,18 +557,18 @@ with col_right:
             
             # The Structural Elements Editor has been removed entirely for a cleaner UI!
             
-            update_submitted = st.form_submit_button("💾 Save Metadata Edits")
+            update_submitted = st.form_submit_button("💾 SAVE METADATA EDITS")
             
             if update_submitted:
                 st.success("Metadata updated successfully! Ready for download.")
         
         st.divider()
-        st.markdown("#### Download Output Document")
+        st.markdown("#### DOWNLOAD OUTPUT DOCUMENT 🎯")
         
         word_bytes = create_docx(st.session_state.parsed_data, exam_language, grade_tier, int(custom_font_size))
         
         st.download_button(
-            label=f"⬇️ Download {st.session_state.original_filename}",
+            label=f"⬇️ DOWNLOAD {st.session_state.original_filename.upper()}",
             data=word_bytes,
             file_name=st.session_state.original_filename,
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"

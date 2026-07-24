@@ -1,6 +1,5 @@
-streamlit
-google-genai
-python-docx
-pillow
-pydantic
-pip install streamlit google-genai reportlab pydantic pillow
+streamlit==1.41.0
+google-genai==0.3.0
+reportlab==4.2.5
+pydantic==2.10.4
+pillow==11.0.0

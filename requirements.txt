@@ -3,3 +3,4 @@ google-genai
 python-docx
 pillow
 pydantic
+pip install streamlit google-genai reportlab pydantic pillow

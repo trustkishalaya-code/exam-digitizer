@@ -1,16 +1,18 @@
 import io
 import os
 import streamlit as st
+from PIL import Image, ImageEnhance, ImageOps
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+import google.generativeai as genai
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="ACADEMIC STUDIO // ELECTRIC BRUTALISM",
+    page_title="ACADEMIC STUDIO // ELECTRIC YELLOW BRUTALISM",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -36,10 +38,8 @@ st.markdown("""
         color: var(--pure-black);
     }
 
-    /* Hide default streamlit elements */
     #MainMenu, header, footer {visibility: hidden;}
 
-    /* Brutalist Header Banner */
     .brutalist-header {
         background-color: var(--electric-yellow);
         border: var(--border-width) solid var(--pure-black);
@@ -72,7 +72,6 @@ st.markdown("""
         border: 2px solid var(--pure-black);
     }
 
-    /* Bento Cards */
     .bento-card {
         background-color: var(--pure-white);
         border: var(--border-width) solid var(--pure-black);
@@ -103,7 +102,6 @@ st.markdown("""
         gap: 0.5rem;
     }
 
-    /* Custom Buttons */
     .stButton > button {
         background-color: var(--electric-yellow) !important;
         color: var(--pure-black) !important;
@@ -128,7 +126,6 @@ st.markdown("""
         box-shadow: 2px 2px 0px var(--pure-black) !important;
     }
 
-    /* Form Inputs */
     input, textarea, select {
         border: var(--border-width) solid var(--pure-black) !important;
         border-radius: 0px !important;
@@ -138,7 +135,6 @@ st.markdown("""
         box-shadow: 3px 3px 0px rgba(13, 13, 13, 0.2) !important;
     }
 
-    /* Metrics */
     div[data-testid="metric-container"] {
         background-color: var(--pure-white);
         border: var(--border-width) solid var(--pure-black);
@@ -154,17 +150,47 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# --- GEMINI AI & OCR LOGIC ---
+def extract_questions_with_gemini(image, api_key):
+    if not api_key:
+        return None, "API Key missing."
+    try:
+        genai.configure(api_key=api_key)
+        # Using fallback model logic robustly
+        model_name = 'gemini-1.5-pro'
+        try:
+            model = genai.GenerativeModel(model_name)
+        except Exception:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+
+        prompt = """
+        Analyze this handwritten or printed exam paper image. Extract all questions, their types (Descriptive, MCQ, Fill-in-the-blanks, etc.), allocated marks, and any options (if MCQ). 
+        Return the result strictly as a structured list or JSON-like breakdown if possible, or clear text format containing:
+        - Question Number / Text
+        - Type
+        - Marks
+        - Options (if applicable)
+        """
+        response = model.generate_content([prompt, image])
+        return response.text, None
+    except Exception as e:
+        return None, str(e)
+
 # --- WORD DOCUMENT GENERATOR CORE ---
-def create_word_document(metadata, questions):
+def create_word_document(metadata, questions, layout_blocks):
     doc = Document()
     
-    # Page setup - Standard Margins
+    # Page setup
     sections = doc.sections
     for section in sections:
         section.top_margin = Inches(1.0)
         section.bottom_margin = Inches(1.0)
         section.left_margin = Inches(1.0)
         section.right_margin = Inches(1.0)
+        if metadata.get("orientation") == "Landscape":
+            section.orientation = WD_ALIGN_PARAGRAPH.CENTER # Handled via section props if needed
+            section.page_width = Inches(11.0)
+            section.page_height = Inches(8.5)
 
     # Header / Metadata Section
     title_p = doc.add_paragraph()
@@ -198,7 +224,16 @@ def create_word_document(metadata, questions):
                     run.font.size = Pt(11)
                     run.font.bold = True
 
-    doc.add_paragraph() # Spacer
+    doc.add_paragraph() 
+
+    # Layout Blocks Insertion
+    if layout_blocks:
+        bp = doc.add_paragraph()
+        b_run = bp.add_run(f"Special Instructions / Layout Focus: {', '.join(layout_blocks)}")
+        b_run.font.name = metadata.get("font_family", "Kalpurush")
+        b_run.font.size = Pt(10)
+        b_run.font.italic = True
+        doc.add_paragraph()
 
     # Questions Loop
     for idx, q in enumerate(questions, 1):
@@ -213,17 +248,17 @@ def create_word_document(metadata, questions):
         marks_run.font.size = Pt(10)
         marks_run.font.italic = True
 
-        # Options if MCQ
         if q.get('type') == 'MCQ':
-            for opt_idx, opt in enumerate(['A', 'B', 'C', 'D']):
-                opt_p = doc.add_paragraph()
-                opt_run = opt_p.add_run(f"   ({opt}) {q.get(f'opt_{opt.lower()}', '')}")
-                opt_run.font.name = metadata.get("font_family", "Kalpurush")
-                opt_run.font.size = Pt(11)
+            for opt in ['A', 'B', 'C', 'D']:
+                opt_val = q.get(f'opt_{opt.lower()}', '')
+                if opt_val:
+                    opt_p = doc.add_paragraph()
+                    opt_run = opt_p.add_run(f"   ({opt}) {opt_val}")
+                    opt_run.font.name = metadata.get("font_family", "Kalpurush")
+                    opt_run.font.size = Pt(11)
 
-        doc.add_paragraph() # Spacer between questions
+        doc.add_paragraph() 
 
-    # Save to buffer
     doc_io = io.BytesIO()
     doc.save(doc_io)
     doc_io.seek(0)
@@ -231,7 +266,6 @@ def create_word_document(metadata, questions):
 
 # --- UI LAYOUT ---
 
-# Header
 st.markdown("""
     <div class="brutalist-header">
         <div>
@@ -254,6 +288,7 @@ if 'questions' not in st.session_state:
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
+    # 1. Structural Metadata Editor
     st.markdown('<div class="bento-card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">⚙️ Structural Metadata Editor</div>', unsafe_allow_html=True)
     
@@ -264,18 +299,56 @@ with col1:
     with c_meta1:
         subject = st.text_input("Subject", "Mathematics & Logic")
         class_name = st.text_input("Class Level", "Grade 5")
+        orientation = st.selectbox("Page Orientation", ["Portrait", "Landscape"])
     with c_meta2:
         academic_year = st.text_input("Academic Year", "2026")
         full_marks = st.text_input("Full Marks", "100")
         duration = st.text_input("Duration", "2.5 Hours")
 
     font_family = st.selectbox("Typography Preset", ["Kalpurush", "Mangal", "Times New Roman", "Arial"])
+    layout_blocks = st.multiselect("Active Layout Blocks", ["Drawing Box Area", "Two-Column Split", "Answer Lines Space", "Watermark Notice"], default=["Answer Lines Space"])
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 2. Handwriting Enhancement & Vision AI OCR Studio
     st.markdown('<div class="bento-card-yellow">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">📝 Question Architecture</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">👁️ Handwriting OCR & Vision AI Studio</div>', unsafe_allow_html=True)
     
-    q_type = st.selectbox("Question Type", ["Descriptive", "MCQ"])
+    gemini_api_key = st.text_input("Gemini API Key", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
+    uploaded_image = st.file_uploader("Upload Exam Paper Scan / Image", type=["png", "jpg", "jpeg"])
+
+    if uploaded_image:
+        image = Image.open(uploaded_image)
+        st.image(image, caption="Uploaded Scan Preview", use_container_width=True)
+        
+        c_enh1, c_enh2 = st.columns(2)
+        with c_enh1:
+            contrast_val = st.slider("Contrast Enhancement", 0.5, 3.0, 1.5)
+        with c_enh2:
+            sharpness_val = st.slider("Sharpness Enhancement", 0.5, 3.0, 2.0)
+            
+        # Apply preprocessing
+        enhancer = ImageEnhance.Contrast(image)
+        img_processed = enhancer.enhance(contrast_val)
+        sharp_enhancer = ImageEnhance.Sharpness(img_processed)
+        img_processed = sharp_enhancer.enhance(sharpness_val)
+        
+        st.image(img_processed, caption="Preprocessed Image (OCR Ready)", use_container_width=True)
+
+        if st.button("🚀 Extract Questions via Gemini OCR"):
+            with st.spinner("Analyzing handwriting patterns and compiling structures..."):
+                ocr_result, err = extract_questions_with_gemini(img_processed, gemini_api_key)
+                if err:
+                    st.error(f"OCR Error: {err}")
+                else:
+                    st.success("Extraction Complete!")
+                    st.text_area("Raw AI Extraction Output", ocr_result, height=150)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # 3. Question Architecture Form
+    st.markdown('<div class="bento-card">', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">📝 Manual Question Architecture</div>', unsafe_allow_html=True)
+    
+    q_type = st.selectbox("Question Type", ["Descriptive", "MCQ", "Fill-in-the-Blanks"])
     q_text = st.text_area("Question Prompt", placeholder="Enter exam question statement...")
     q_marks = st.text_input("Allocated Marks", "5")
     
@@ -283,11 +356,11 @@ with col1:
     if q_type == "MCQ":
         oc1, oc2 = st.columns(2)
         with oc1:
-            opt_a = st.text_input("Option A", "A")
-            opt_b = st.text_input("Option B", "B")
+            opt_a = st.text_input("Option A", "")
+            opt_b = st.text_input("Option B", "")
         with oc2:
-            opt_c = st.text_input("Option C", "C")
-            opt_d = st.text_input("Option D", "D")
+            opt_c = st.text_input("Option C", "")
+            opt_d = st.text_input("Option D", "")
 
     if st.button("➕ Inject Question to Stack"):
         if q_text:
@@ -301,6 +374,7 @@ with col1:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
+    # 4. Active Document Pipeline & Queue
     st.markdown('<div class="bento-card">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">📊 Active Document Pipeline</div>', unsafe_allow_html=True)
     
@@ -321,9 +395,10 @@ with col2:
         
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # 5. Compile & Export Studio
     st.markdown('<div class="bento-card-yellow">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">💾 Compile & Export</div>', unsafe_allow_html=True)
-    st.write("Generate a professionally formatted Word document ready for print distribution.")
+    st.markdown('<div class="card-title">💾 Compile & Export Word Document</div>', unsafe_allow_html=True)
+    st.write("Generate a professionally formatted Word document ready for print distribution with your selected font preset, layout blocks, and structured metadata.")
     
     metadata = {
         "institution": institution,
@@ -333,11 +408,12 @@ with col2:
         "academic_year": academic_year,
         "full_marks": full_marks,
         "duration": duration,
-        "font_family": font_family
+        "font_family": font_family,
+        "orientation": orientation
     }
 
     if st.session_state.questions:
-        doc_bytes = create_word_document(metadata, st.session_state.questions)
+        doc_bytes = create_word_document(metadata, st.session_state.questions, layout_blocks)
         st.download_button(
             label="⚡ DOWNLOAD COMPILED .DOCX",
             data=doc_bytes,
